@@ -1,13 +1,11 @@
 # myBackup - Sistema de Respaldo Automático
 
 > **Proyecto Obligatorio - Sistemas Operativos**  
-> Universidad: Grupo Matutino (Martes y Jueves)  
+> Participantes: Trinidad Bunge, Maximiliano Lopez
 > Profesor: Angel Caffa  
-> Versión: 1.0
 
----
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
 - [Descripción](#descripción)
 - [Características](#características)
@@ -19,12 +17,11 @@
 - [Ejemplos](#ejemplos)
 - [Benchmarks (PARTE 2)](#benchmarks-parte-2)
 - [Solución de Problemas](#solución-de-problemas)
-- [Contribuidores](#contribuidores)
-- [Licencia](#licencia)
+
 
 ---
 
-## 📝 Descripción
+##  Descripción
 
 **myBackup** es un script bash automatizado para crear, gestionar y restaurar copias de seguridad (backups) en sistemas Linux.
 
@@ -42,7 +39,6 @@ El sistema permite:
 
 ## Características
 
-### Core Features
 - **Backup Automático**: Crea respaldos en intervalos configurables (horas/días)
 - **Múltiples Formatos**: Soporta tar.gz, tar.bz2, tar sin comprimir
 - **Configuración Flexible**: Línea de comandos + archivo de configuración
