@@ -1,8 +1,9 @@
 # myBackup - Sistema de Respaldo Automático
 
 > **Proyecto Obligatorio - Sistemas Operativos**  
-> Participantes: Trinidad Bunge, Maximiliano Lopez
+> Participantes: Trinidad Bunge, Maximiliano Lopez  
 > Profesor: Angel Caffa  
+> 
 
 
 ## Tabla de Contenidos
@@ -13,10 +14,7 @@
 - [Instalación](#instalación)
 - [Uso](#uso)
 - [Configuración](#configuración)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Ejemplos](#ejemplos)
 - [Benchmarks (PARTE 2)](#benchmarks-parte-2)
-- [Solución de Problemas](#solución-de-problemas)
 
 
 ---
