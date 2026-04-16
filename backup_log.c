@@ -1,6 +1,6 @@
 /*
  * backup_log.c — Comando auxiliar para myBackup
- * Sistemas Operativos — ORT Uruguay
+ * Sistemas Operativos — UCU Uruguay
  *
  * Uso: backup_log <NIVEL> <MENSAJE> <ARCHIVO_LOG>
  *
