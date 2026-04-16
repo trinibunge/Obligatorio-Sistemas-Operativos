@@ -1,9 +1,11 @@
 # myBackup - Sistema de Respaldo Automático
 
-> **Proyecto Obligatorio - Sistemas Operativos**  
+## **Proyecto Obligatorio - Sistemas Operativos**
+
 [![Maximiliano López](https://img.shields.io/badge/GitHub-Maximiliano_López-B7E3FF?logo=github&logoColor=black)](https://github.com/maaxilopp) [![Trinidad Bunge](https://img.shields.io/badge/GitHub-Trinidad_Bunge-FFD966?logo=github&logoColor=black)](https://github.com/trinibun)
-> Profesor: Angel Caffa  
-> 
+
+Profesor: Angel Caffa  
+ 
 
 
 ## Tabla de Contenidos
