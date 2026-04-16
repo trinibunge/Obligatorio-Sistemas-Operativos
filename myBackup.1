@@ -1,0 +1,169 @@
+.TH MYBACKUP 1 "2025" "ORT Uruguay" "Manual del usuario"
+
+.SH NOMBRE
+myBackup \- script de backup automatizado para Linux
+
+.SH SINOPSIS
+.B myBackup.sh
+[\fB\-d\fR \fIorigen\fR]
+[\fB\-o\fR \fIdestino\fR]
+[\fB\-r\fR \fIdías\fR]
+[\fB\-c\fR \fIarchivo_conf\fR]
+[\fB\-v\fR]
+[\fB\-n\fR]
+[\fB\-e\fR]
+[\fB\-i\fR]
+[\fB\-m\fR]
+[\fB\-h\fR]
+
+.SH DESCRIPCIÓN
+.B myBackup
+es un script Bash para automatizar tareas de backup. Soporta compresión con
+gzip, encriptación con GPG, limpieza automática de backups viejos, y puede
+ser programado para ejecutarse automáticamente mediante cron.
+
+La configuración puede especificarse por línea de comandos, mediante el archivo
+\fI~/.myBackup.conf\fR, o interactivamente a través del menú.
+
+.SH OPCIONES
+
+.TP
+.BR \-d " " \fIorigen\fR
+Directorio origen del cual se realizará el backup.
+
+.TP
+.BR \-o " " \fIdestino\fR
+Directorio donde se guardarán los archivos de backup.
+Por defecto: \fI~/backups\fR
+
+.TP
+.BR \-r " " \fIdías\fR
+Cantidad de días que se conservan los backups antes de ser eliminados
+automáticamente. 0 desactiva la limpieza automática.
+Por defecto: 7
+
+.TP
+.BR \-c " " \fIarchivo\fR
+Especificar un archivo de configuración alternativo al predeterminado
+\fI~/.myBackup.conf\fR
+
+.TP
+.BR \-v
+Modo verbose: muestra detalles de la ejecución en la terminal.
+
+.TP
+.BR \-n
+No comprimir. Por defecto el backup se comprime con gzip (tar.gz).
+
+.TP
+.BR \-e
+Encriptar el backup con GPG. Requiere que \fBGPG_RECIPIENT\fR esté
+configurado en el archivo de configuración.
+
+.TP
+.BR \-i
+Instalar el script en cron con la frecuencia configurada en \fBFRECUENCIA\fR.
+
+.TP
+.BR \-m
+Abrir el menú interactivo (requiere \fBdialog\fR instalado).
+
+.TP
+.BR \-h
+Mostrar la ayuda y salir.
+
+.SH ARCHIVO DE CONFIGURACIÓN
+El archivo \fI~/.myBackup.conf\fR usa el formato \fBCLAVE=valor\fR de Bash.
+Las variables disponibles son:
+
+.TP
+.B ORIGEN
+Directorio origen del backup.
+
+.TP
+.B DESTINO
+Directorio destino del backup.
+
+.TP
+.B RETENCION
+Días de retención de backups.
+
+.TP
+.B COMPRIMIR
+true/false — activar compresión gzip.
+
+.TP
+.B ENCRIPTAR
+true/false — activar encriptación GPG.
+
+.TP
+.B GPG_RECIPIENT
+Email o ID de la clave GPG del destinatario.
+
+.TP
+.B FRECUENCIA
+Expresión cron para la ejecución automática.
+
+.TP
+.B LOG_FILE
+Ruta al archivo de log.
+
+.SH EJEMPLOS
+
+Backup básico de un directorio:
+.RS
+.B ./myBackup.sh \-d /home/usuario/documentos
+.RE
+
+Backup con destino explícito y verbose:
+.RS
+.B ./myBackup.sh \-d /home/usuario \-o /mnt/externo \-v
+.RE
+
+Backup sin compresión:
+.RS
+.B ./myBackup.sh \-d /home/usuario \-n
+.RE
+
+Backup encriptado:
+.RS
+.B ./myBackup.sh \-d /home/usuario \-e
+.RE
+
+Instalar en cron:
+.RS
+.B ./myBackup.sh \-d /home/usuario \-i
+.RE
+
+Abrir menú interactivo:
+.RS
+.B ./myBackup.sh \-m
+.RE
+
+.SH ARCHIVOS
+.TP
+.I ~/.myBackup.conf
+Archivo de configuración principal.
+
+.TP
+.I ~/.mybackup.log
+Archivo de log por defecto.
+
+.SH DEPENDENCIAS
+.B tar
+(obligatorio),
+.B gpg
+(opcional, para encriptación),
+.B dialog
+(opcional, para el menú interactivo),
+.B backup_log
+(opcional, comando auxiliar en C para logging).
+
+.SH AUTORES
+Trabajo Obligatorio — Sistemas Operativos, ORT Uruguay.
+
+.SH VER TAMBIÉN
+.BR tar (1),
+.BR gpg (1),
+.BR crontab (5),
+.BR cron (8)
