@@ -1,12 +1,13 @@
-#!/bin/bash
-# =============================================================================
-# myBackup.sh — Script de backup automatizado
-# Sistemas Operativos — ORT Uruguay
-# =============================================================================
 
-# ---------------------------------------------------------------------------
-# Valores por defecto (pueden ser sobreescritos por .myBackup.conf o CLI)
-# ---------------------------------------------------------------------------
+#!/bin/bash
+ 
+#############################################################################
+# myBackup - Script de Backup Automático para Linux
+# Descripción: Automatiza tareas de backup con soporte para encriptación,
+#              compresión, programación automática e interfaz por menús
+# Autor: Grupo Angel Caffa
+# Fecha: 2026
+#############################################################################
 ORIGEN=""
 DESTINO="$HOME/backups"
 VERBOSE=false
