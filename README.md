@@ -68,9 +68,9 @@ El sistema permite:
 - cron (automatización)
 - gcc + make (para compilar utilidad C)
 ```
-### Instalación
+## Instalación
 
-#### Dependencias por sistema:
+### Dependencias por sistema:
 
 Ubuntu/Debian:
 ```bash
@@ -86,7 +86,7 @@ Linux:
 sudo pacman -S tar gzip bzip2 cronie gcc make dialog openssl gnupg
 ```
 
-#### Instalación rápida:
+### Instalación rápida:
 ```bash
 # 1. Clonar o descargar el repositorio
 git clone <repository-url> mybackup
@@ -105,7 +105,7 @@ cp .myBackup.conf ~/.myBackup.conf
 which backup_log
 myBackup.sh -h
 ```
-#### Instalación manual
+### Instalación manual
 ```bash
 # 1. Compilar backup_log.c
 gcc -Wall -Wextra -std=c99 backup_log.c -o backup_log
@@ -125,7 +125,7 @@ sudo chmod +x /usr/local/bin/myBackup
 cp .myBackup.conf ~/.myBackup.conf
 ```
 
-#### Verificación post instalación
+### Verificación post instalación
 ```bash
 #Confirmar que backup_log está en PATH
 $ which backup_log
@@ -138,5 +138,7 @@ $ ls -la myBackup.sh
 # Ver la ayuda
 $ ./myBackup.sh -h
 ```
+
+
 
 
