@@ -291,12 +291,12 @@ Prueba de estrés: Archivos especiales (symlinks, pipes, sockets)
 #### Test 5: Automatización con Cron
 Ejecución automática cada 6 horas (1GB de datos):
 
-│ Ejecución │ Hora  │ Tiempo │ Tamaño │ Estatus │
-├───────────┼───────┼────────┼────────┼─────────┤
-│ 1         │ 00:00 │ 4.12s  │ 520MB  │ ok      │
-│ 2         │ 06:00 │ 4.08s  │ 518MB  │ OK      │
-│ 3         │ 12:00 │ 4.19s  │ 521MB  │ OK      │
-│ 4         │ 18:00 │ 4.15s  │ 519MB  │ OK      │
+| **Ejecución** | **Hora** | **Tiempo** | **Tamaño** | **Estatus** |
+|:---:|:---:|:---:|:---:|:---:|
+| 1 | 00:00 | 4.12s | 520MB |  OK |
+| 2 | 06:00 | 4.08s | 518MB |  OK |
+| 3 | 12:00 | 4.19s | 521MB |  OK |
+| 4 | 18:00 | 4.15s | 519MB |  OK |
 
 ### Conclusiones de Performance
 - SSD vs HDD: Los backups en SSD son más rápidos
