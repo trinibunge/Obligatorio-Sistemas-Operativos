@@ -20,7 +20,7 @@
 
 ##  Descripción
 
-**myBackup** es un script bash automatizado para crear, gestionar y restaurar copias de seguridad (backups) en sistemas Linux.
+myBackup es un sistema de respaldo automático completo para Linux, diseñado para simplificar y automatizar la creación, gestión y restauración de copias de seguridad. Desarrollado como entrega obligatoria de la asignatura Sistemas Operativos, combina scripting Bash avanzado con utilidades C compiladas.
 
 El sistema permite:
 - Crear backups comprimidos o sin comprimir
@@ -44,7 +44,7 @@ El sistema permite:
 - **Interfaz Menú**: Modo interactivo para usuarios no avanzados
 
 ### Características Avanzadas
-- **Checksum Verification**: Verifica integridad SHA256
+- **Checksum Verification**: Verifica integridad de datos, tiene como requisito sha256sum
 - **Encriptación AES-256**: Protege datos sensibles con OpenSSL
 - **Exclusiones**: Omite archivos/carpetas específicas
 - **Logs Detallados**: Registro completo de operaciones
@@ -67,3 +67,76 @@ El sistema permite:
 - sha256sum (checksums)
 - cron (automatización)
 - gcc + make (para compilar utilidad C)
+```
+### Instalación
+
+#### Dependencias por sistema:
+
+Ubuntu/Debian:
+```bash
+sudo apt update
+sudo apt install tar gzip bzip2 cron gcc make dialog openssl gnupg
+```
+CentOS/RHEL:
+```bash
+sudo yum install tar gzip bzip2 cronie gcc make dialog openssl gnupg
+```
+Linux:
+```bash
+sudo pacman -S tar gzip bzip2 cronie gcc make dialog openssl gnupg
+```
+
+#### Instalación rápida:
+```bash
+# 1. Clonar o descargar el repositorio
+git clone <repository-url> mybackup
+cd mybackup
+
+# 2. Compilar el programa auxiliar C
+make
+
+# 3. Instalar el sistema (requiere sudo)
+sudo make install
+
+# 4. Copiar archivo de configuración al HOME
+cp .myBackup.conf ~/.myBackup.conf
+
+# 5. Verificar instalación
+which backup_log
+myBackup.sh -h
+```
+#### Instalación manual
+```bash
+# 1. Compilar backup_log.c
+gcc -Wall -Wextra -std=c99 backup_log.c -o backup_log
+
+# 2. Copiar el binario compilado a /usr/local/bin
+sudo cp backup_log /usr/local/bin/
+sudo chmod +x /usr/local/bin/backup_log
+
+# 3. Hacer el script principal ejecutable
+chmod +x myBackup.sh
+
+# 4. (Opcional) Copiar a /usr/local/bin para usar desde cualquier lugar
+sudo cp myBackup.sh /usr/local/bin/myBackup
+sudo chmod +x /usr/local/bin/myBackup
+
+# 5. Copiar configuración por defecto
+cp .myBackup.conf ~/.myBackup.conf
+```
+
+#### Verificación post instalación
+```bash
+#Confirmar que backup_log está en PATH
+$ which backup_log
+/usr/local/bin/backup_log
+
+# Confirmar que el script es ejecutable
+$ ls -la myBackup.sh
+-rwxr-xr-x 1 usuario grupo 12345 Apr 16 2026 myBackup.sh
+
+# Ver la ayuda
+$ ./myBackup.sh -h
+```
+
+
