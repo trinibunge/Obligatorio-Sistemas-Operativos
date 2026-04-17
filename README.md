@@ -1,6 +1,6 @@
-# myBackup - Sistema de Respaldo Automático
+# myBackup, Sistema de Respaldo Automático
 
-## **Proyecto Obligatorio - Sistemas Operativos**
+## **Proyecto Obligatorio de Sistemas Operativos**
 
 [![Maximiliano López](https://img.shields.io/badge/GitHub-Maximiliano_López-B7E3FF?logo=github&logoColor=black)](https://github.com/maaxilopp) [![Trinidad Bunge](https://img.shields.io/badge/GitHub-Trinidad_Bunge-FFD966?logo=github&logoColor=black)](https://github.com/trinibun)
 
@@ -13,7 +13,7 @@
 - [Instalación](#instalación)
 - [Uso](#uso)
 - [Configuración](#configuración)
-- [Benchmarks (PARTE 2)](#benchmarks-parte-2)
+- [Benchmarks](#benchmarks)
 
 
 ---
@@ -138,7 +138,104 @@ $ ls -la myBackup.sh
 # Ver la ayuda
 $ ./myBackup.sh -h
 ```
+## Uso
+### Uso basico
+```bash
+# Backup simple del directorio de documentos
+./myBackup.sh -d ~/Documentos
 
+# Backup a ubicación específica
+./myBackup.sh -d ~/Documentos -o /mnt/backups
 
+# Modo verbose (ver detalles)
+./myBackup.sh -d ~/Documentos -v
 
+# Sin compresión (para ficheros ya comprimidos)
+./myBackup.sh -d ~/Documentos -n
+```
+### Uso avanzado
+```bash
+# Backup encriptado con GPG
+./myBackup.sh -d ~/Documentos -e
 
+# Retención personalizada (15 días)
+./myBackup.sh -d ~/Documentos -r 15
+
+# Usar archivo de configuración alternativo
+./myBackup.sh -c /etc/mybackup/config.conf
+
+# Instalar en cron para automatización
+./myBackup.sh -d ~/Documentos -o ~/backups -i
+
+# Interfaz interactiva (menú)
+./myBackup.sh -m
+```
+### Opciones de líneas de comandos
+Opciones:
+  -d <directorio>   Directorio origen del backup (obligatorio)
+  -o <destino>      Directorio destino (default: ~/backups)
+  -v                Verbose: mostrar detalles en pantalla
+  -n                No comprimir (por defecto comprime con gzip)
+  -e                Encriptar con GPG
+  -r <días>         Retención: días a guardar backups (default: 7)
+  -c <archivo>      Archivo de configuración alternativo
+  -i                Instalar en cron con frecuencia FRECUENCIA
+  -m                Abrir menú interactivo (requiere dialog)
+  -h                Mostrar esta ayuda
+
+## Configuración
+El archivo de configuración usa formato clave=valor de Bash y se carga automáticamente. (~/.myBackup.conf)
+ ```bash
+  
+  # =============================================================================
+# .myBackup.conf — Configuración de myBackup
+# =============================================================================
+
+# Directorio origen del backup (se puede sobreescribir con -d)
+ORIGEN=""
+
+# Directorio destino (se puede sobreescribir con -o)
+DESTINO="$HOME/backups"
+
+# Días que se conservan los backups antes de eliminarlos automáticamente
+# 0 = no eliminar nunca
+RETENCION=7
+
+# Comprimir el backup con gzip (true/false)
+COMPRIMIR=true
+
+# Encriptar el backup con GPG (true/false)
+ENCRIPTAR=false
+
+# Email o ID de la clave GPG (solo si ENCRIPTAR=true)
+GPG_RECIPIENT="tu-email@ejemplo.com"
+
+# Frecuencia de ejecución automática (formato cron)
+# Minuto Hora DiaMes Mes DíaSemana
+# "0 2 * * *"     → todos los días a las 2:00am
+# "0 */6 * * *"   → cada 6 horas
+# "0 2 * * 1"     → lunes a las 2:00am
+FRECUENCIA="0 2 * * *"
+
+# Archivo de log
+LOG_FILE="$HOME/.mybackup.log"
+```
+### Precedencia de Configuración
+
+- Archivo de configuración (~/.myBackup.conf) — se carga primero
+- Argumentos CLI (-d, -o, -r, etc.) — sobreescriben la configuración
+- Valores por defecto — se usan si no se especifica nada
+
+ ## Benchmarks
+### Metodología de Testing
+
+Los benchmarks miden el rendimiento de myBackup en diferentes entornos y cargas de trabajo.
+
+### Configuración de Máquinas Virtuales Testeadas:
+
+| **VM** | **SO Base** | **SO Invitado** | **CPU** | **RAM** | **Almacenamiento** |
+|:---:|:---:|:---|:---:|:---:|:---:|
+| VM-1 |  Linux | Ubuntu 22.04 LTS | 4 cores | 8GB | 100GB SSD |
+| VM-2 |  Windows 10 | Ubuntu 20.04 LTS | 4 cores | 8GB | 100GB SSD |
+| VM-3 |  Linux | Debian 11 (Minimalista) | 2 cores | 4GB | 50GB SSD |
+| VM-4 |  Windows 10 | CentOS 7 | 4 cores | 8GB | 100GB SSD |
