@@ -57,20 +57,29 @@ El sistema permite:
 
 ### Flujo de Ejecución
 
+### Flujo de Ejecución
+
 ```mermaid
 graph TD
-    A[INICIO] --> B[Cargar config por defecto]
-    B --> C[Cargar ~/.myBackup.conf]
-    C --> D[Parsear argumentos CLI]
-    D --> E[Verificar dependencias]
-    E --> F{¿Qué modo?}
-    F -->|"-m"| G[Abrir menú interactivo]
-    F -->|"-i"| H[Instalar en cron]
-    F -->|Nada| I[Ejecutar backup]
-    G --> J[Registrar en log]
+    A["INICIO"] --> B["Cargar configuración"]
+    B --> C["Leer ~/.myBackup.conf"]
+    C --> D["Parsear argumentos CLI"]
+    D --> E["Verificar dependencias"]
+    E --> F{"¿Qué modo?"}
+    
+    F -->|"-m"| G["Menú Interactivo"]
+    F -->|"-i"| H["Instalar en Cron"]
+    F -->|"Nada"| I["Hacer Backup"]
+    
+    G --> J[" Registrar en log"]
     H --> J
     I --> J
-    J --> K[FIN]
+    
+    J --> K[" FIN"]
+    
+    style A fill:#90EE90
+    style K fill:#FFB6C6
+    style F fill:#87CEEB
 ## Características
 
 - **Backup Automático**: Crea respaldos en intervalos configurables (horas/días)
