@@ -23,14 +23,39 @@
 myBackup es un sistema de respaldo automático completo para Linux, diseñado para simplificar y automatizar la creación, gestión y restauración de copias de seguridad. Desarrollado como entrega obligatoria de la asignatura Sistemas Operativos, combina scripting Bash avanzado con utilidades C compiladas.
 
 El sistema permite:
-- Crear backups comprimidos o sin comprimir
-- Automatizar backups en intervalos personalizables
-- Encriptar backups con OpenSSL (AES-256)
-- Interfaz interactiva con menú
-- Logs detallados de todas las operaciones
+- Crear backups comprimidos (gzip) o sin comprimir
+- Automatizar backups en intervalos personalizables mediante cron
+- Encriptar backups con GPG (criptografía asimétrica)
+- Interfaz interactiva con menú mediante dialog
+- Logs detallados de todas las operaciones (INFO, WARN, ERROR)
+- Eliminar automáticamente backups antiguos (gestión de retención)
 
 ---
+## Arquitectura
 
+### Componentes
+- **myBackup.sh** (331 líneas): Script principal en Bash
+  - Manejo de parámetros CLI
+  - Carga de configuración
+  - Lógica de backup y encriptación
+  - Interfaz menú con dialog
+  - Gestión de cron
+
+- **backup_log.c** (74 líneas): Programa auxiliar en C
+  - Escritura eficiente de logs
+  - Validación de niveles (INFO, WARN, ERROR)
+  - Timestamps precisos
+
+- **myBackup.conf**: Archivo de configuración
+  - Variables configurables
+  - Precedencia: archivo config → CLI → defaults
+
+- **myBackup.1**: Manual en formato Roff
+  - Compatible con `man myBackup`
+  - Documentación estándar Unix
+
+### Flujo de Ejecución
+Inicio → Cargar config → Parsear CLI → Verificar dependencias ↓ ├─ Menú? → menu_interactivo() ├─ Instalar cron? → instalar_cron() └─ Backup? → hacer_backup() ↓ Fin
 ## Características
 
 - **Backup Automático**: Crea respaldos en intervalos configurables (horas/días)
@@ -41,11 +66,10 @@ El sistema permite:
 - **Interfaz Menú**: Modo interactivo para usuarios no avanzados
 
 ### Características Avanzadas
-- **Checksum Verification**: Verifica integridad de datos, tiene como requisito sha256sum
-- **Encriptación AES-256**: Protege datos sensibles con OpenSSL
-- **Exclusiones**: Omite archivos/carpetas específicas
-- **Logs Detallados**: Registro completo de operaciones
-- **Utilidad en C**: Programa auxiliar compilado para operaciones críticas
+- **Encriptación GPG**: Protege datos sensibles con GPG (criptografía asimétrica)
+- **Logs Detallados**: Registro completo de operaciones con niveles (INFO, WARN, ERROR)
+- **Utilidad en C**: Programa auxiliar compilado (backup_log) para logging eficiente
+- **Integridad de Datos**: Preservación automática de permisos, propietarios y metadatos mediante tar
 
 ---
 
@@ -60,9 +84,10 @@ El sistema permite:
 # Herramientas esenciales
 - tar (empaquetado)
 - gzip/bzip2 (compresión)
-- openssl (encriptación)
+- gpg (encriptación)          
 - cron (automatización)
 - gcc + make (para compilar utilidad C)
+
 ```
 ## Instalación
 
