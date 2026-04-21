@@ -56,30 +56,10 @@ El sistema permite:
   - Documentación estándar Unix
 
 ### Flujo de Ejecución
+<img width="1257" height="1919" alt="mermaid-diagram" src="https://github.com/user-attachments/assets/12b2aa92-8ec7-4198-9925-16cae3e98507" />
 
-### Flujo de Ejecución
+---
 
-```mermaid
-graph TD
-    A["INICIO"] --> B["Cargar configuración"]
-    B --> C["Leer ~/.myBackup.conf"]
-    C --> D["Parsear argumentos CLI"]
-    D --> E["Verificar dependencias"]
-    E --> F{"¿Qué modo?"}
-    
-    F -->|"-m"| G["Menú Interactivo"]
-    F -->|"-i"| H["Instalar en Cron"]
-    F -->|"Nada"| I["Hacer Backup"]
-    
-    G --> J[" Registrar en log"]
-    H --> J
-    I --> J
-    
-    J --> K[" FIN"]
-    
-    style A fill:#90EE90
-    style K fill:#FFB6C6
-    style F fill:#87CEEB
 ## Características
 
 - **Backup Automático**: Crea respaldos en intervalos configurables (horas/días)
