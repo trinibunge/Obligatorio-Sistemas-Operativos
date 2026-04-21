@@ -8,6 +8,7 @@
 ## Tabla de Contenidos
 
 - [Descripción](#descripción)
+- [Arquitectura](#arquitectura)
 - [Características](#características)
 - [Requisitos](#requisitos)
 - [Instalación](#instalación)
@@ -55,7 +56,21 @@ El sistema permite:
   - Documentación estándar Unix
 
 ### Flujo de Ejecución
-Inicio → Cargar config → Parsear CLI → Verificar dependencias ↓ ├─ Menú? → menu_interactivo() ├─ Instalar cron? → instalar_cron() └─ Backup? → hacer_backup() ↓ Fin
+
+```mermaid
+graph TD
+    A[INICIO] --> B[Cargar config por defecto]
+    B --> C[Cargar ~/.myBackup.conf]
+    C --> D[Parsear argumentos CLI]
+    D --> E[Verificar dependencias]
+    E --> F{¿Qué modo?}
+    F -->|"-m"| G[Abrir menú interactivo]
+    F -->|"-i"| H[Instalar en cron]
+    F -->|Nada| I[Ejecutar backup]
+    G --> J[Registrar en log]
+    H --> J
+    I --> J
+    J --> K[FIN]
 ## Características
 
 - **Backup Automático**: Crea respaldos en intervalos configurables (horas/días)
