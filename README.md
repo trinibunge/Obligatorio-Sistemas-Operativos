@@ -25,10 +25,7 @@ myBackup es un sistema de respaldo automático completo para Linux, diseñado pa
 El sistema permite:
 - Crear backups comprimidos o sin comprimir
 - Automatizar backups en intervalos personalizables
-- Restaurar datos desde backups anteriores
-- Verificar integridad con checksums SHA256
 - Encriptar backups con OpenSSL (AES-256)
-- Excluir patrones de archivos
 - Interfaz interactiva con menú
 - Logs detallados de todas las operaciones
 
@@ -64,7 +61,6 @@ El sistema permite:
 - tar (empaquetado)
 - gzip/bzip2 (compresión)
 - openssl (encriptación)
-- sha256sum (checksums)
 - cron (automatización)
 - gcc + make (para compilar utilidad C)
 ```
