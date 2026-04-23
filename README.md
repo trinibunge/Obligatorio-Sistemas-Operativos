@@ -35,14 +35,14 @@ El sistema permite:
 ## Arquitectura
 
 ### Componentes
-- **myBackup.sh** (331 líneas): Script principal en Bash
+- **myBackup.sh**: Script principal en Bash
   - Manejo de parámetros CLI
   - Carga de configuración
   - Lógica de backup y encriptación
   - Interfaz menú con dialog
   - Gestión de cron
 
-- **backup_log.c** (74 líneas): Programa auxiliar en C
+- **backup_log.c**: Programa auxiliar en C
   - Escritura eficiente de logs
   - Validación de niveles (INFO, WARN, ERROR)
   - Timestamps precisos
