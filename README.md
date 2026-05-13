@@ -382,39 +382,28 @@ OK: checksums coinciden
 
 ### Caso D — Interrupción manual (Ctrl+C) (fix aplicado)
 
-**Problema (antes):** al interrumpir el proceso durante la creación del tar, podían quedar archivos de backup parciales con nombre final (ej. `backup_20260513_135453.tar.gz`).
+**Problema detectado en testing:** al interrumpir el proceso durante la creación del tar, la señal `SIGINT` llegaba directamente a `tar` (proceso en primer plano), lo que lo mataba antes de que el trap del script pudiera actuar. El archivo `.part` quedaba en disco sin ser eliminado.
 
-**Fix aplicado:** se implementó manejo de señales (`trap` para `SIGINT/SIGTERM`) y se generó el backup primero en un archivo temporal `*.part`, que solo se renombra al nombre final si la operación termina correctamente. Ante interrupción, se eliminan los artefactos parciales.
+**Fix aplicado:** `tar` ahora corre en background (`&`) seguido de `wait`, de forma que el script intercepta la señal primero en `cleanup_parcial`, mata a `tar` explícitamente con `kill $TAR_PID`, y luego elimina el `.part`. Se agregó además un `rm -f $DESTINO/*.part` de red para cubrir cualquier caso rezagado.
 
-**Re-test (después del fix):**
+**Test ejecutado:**
 
 ```bash
-bash ./myBackup.sh -d ~/test_data -o ~/backups -v
-# Ctrl+C durante el backup
+./myBackup.sh -d ~/test_data -v &
+PID=$!; sleep 2; kill -INT $PID; wait $PID 2>/dev/null
+ls ~/backups/*.part 2>/dev/null || echo "✓ Sin parciales"
 ```
 
-Salida (extracto):
+Salida obtenida:
 
 ```text
 [INFO]  Iniciando backup: /home/trini/test_data -> /home/trini/backups
-^C[WARN]  Backup interrumpido (SIGINT/SIGTERM). Archivos parciales eliminados.
+[WARN]  Backup interrumpido (SIGINT/SIGTERM/SIGHUP). Archivos parciales eliminados.
+[ABORT] Backup interrumpido. Limpieza realizada.
+✓ Sin parciales
 ```
 
-Verificación de que no quedaron temporales:
-
-```bash
-find ~/backups -maxdepth 1 -type f -name "*.part"
-```
-
-Resultado: *(sin salida)*.
-
-Evidencia en log:
-
-```text
-[2026-05-13 15:12:32] [WARN ] Backup interrumpido (SIGINT/SIGTERM). Archivos parciales eliminados.
-```
-
-**Conclusión:** tras el fix, interrumpir el backup no deja archivos temporales `*.part` ni backups corruptos con nombre final.
+**Conclusión:** tras el fix, interrumpir el backup durante la compresión no deja archivos `.part` ni backups corruptos con nombre final.
 
 ### Caso E — Stress: 50.000 archivos pequeños
 - Resultado: **backup exitoso**
