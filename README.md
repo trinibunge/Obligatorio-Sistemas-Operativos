@@ -246,11 +246,10 @@ LOG_FILE="$HOME/.mybackup.log"
 
 ## Parte 2 — Entorno 1 (VM principal)
 
-**Fecha:** 2026-05-13  
 **Host:** macOS + UTM (QEMU)  
-**Guest:** Ubuntu (aarch64)
+**Guest:** Ubuntu (aarch64)  
 
-*(Evidencia del Entorno 1 ya documentada en la sección original: uname/nproc/free/df.)*
+**Recursos:** 4 vCPU, ~3.3GiB RAM *(VM principal)*
 
 ---
 
@@ -258,29 +257,10 @@ LOG_FILE="$HOME/.mybackup.log"
 
 Se duplicó la VM y se redujeron recursos para evaluar performance bajo restricciones (segundo entorno de pruebas).
 
-**Fecha:** 2026-05-13  
 **Host:** macOS + UTM (QEMU)  
 **Guest:** Ubuntu (aarch64)
 
-**Configuración detectada (Entorno 2):**
-- CPU: `nproc=1` (1 vCPU)
-- RAM: ~945MiB total
-
-Evidencia (Entorno 2):
-
-```bash
-Wed May 13 16:09:56 -03 2026
-Linux trini-QEMU-Virtual-Machine 6.17.0-23-generic #23-Ubuntu SMP PREEMPT_DYNAMIC Sat Apr 11 23:16:13 UTC 2026 aarch64 GNU/Linux
-
-nproc=1
-
-               total        used        free      shared  buff/cache   available
-Mem:           945Mi       617Mi        53Mi        37Mi       389Mi       327Mi
-Swap:          3.8Gi       468Mi       3.3Gi
-
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/vda3        27G   16G  9.6G  63% /
-```
+**Recursos:** 1 vCPU, ~945MiB RAM *(VM recortada)*
 
 ---
 
