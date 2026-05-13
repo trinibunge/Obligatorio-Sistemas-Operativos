@@ -95,23 +95,28 @@ El sistema permite:
 ```
 ## Instalación
 
-### Dependencias por sistema:
+### Dependencias por sistema
 
 Ubuntu/Debian:
 ```bash
 sudo apt update
 sudo apt install tar gzip bzip2 cron gcc make dialog openssl gnupg
 ```
+
 CentOS/RHEL:
 ```bash
 sudo yum install tar gzip bzip2 cronie gcc make dialog openssl gnupg
 ```
-Linux:
+
+Arch Linux:
 ```bash
 sudo pacman -S tar gzip bzip2 cronie gcc make dialog openssl gnupg
 ```
 
-### Instalación rápida:
+---
+
+## Instalación rápida
+
 ```bash
 # 1. Clonar o descargar el repositorio
 git clone <repository-url> mybackup
@@ -120,17 +125,26 @@ cd mybackup
 # 2. Compilar el programa auxiliar C
 make
 
-# 3. Instalar el sistema (requiere sudo)
+# 3. Instalar el sistema 
 sudo make install
 
 # 4. Copiar archivo de configuración al HOME
-cp .myBackup.conf ~/.myBackup.conf
+cp myBackup.conf ~/.myBackup.conf
 
-# 5. Verificar instalación
+# 5. Instalar el script principal globalmente
+sudo cp myBackup.sh /usr/local/bin/myBackup
+sudo chmod +x /usr/local/bin/myBackup
+
+# 6. Verificar instalación
 which backup_log
-myBackup.sh -h
+which myBackup
+myBackup -h
 ```
-### Instalación manual
+
+---
+
+## Instalación manual
+
 ```bash
 # 1. Compilar backup_log.c
 gcc -Wall -Wextra -std=c99 backup_log.c -o backup_log
@@ -142,26 +156,29 @@ sudo chmod +x /usr/local/bin/backup_log
 # 3. Hacer el script principal ejecutable
 chmod +x myBackup.sh
 
-# 4. (Opcional) Copiar a /usr/local/bin para usar desde cualquier lugar
+# 4. Copiar el script principal a /usr/local/bin
 sudo cp myBackup.sh /usr/local/bin/myBackup
 sudo chmod +x /usr/local/bin/myBackup
 
 # 5. Copiar configuración por defecto
-cp .myBackup.conf ~/.myBackup.conf
+cp myBackup.conf ~/.myBackup.conf
 ```
 
-### Verificación post instalación
+---
+
+## Verificación post instalación
+
 ```bash
-#Confirmar que backup_log está en PATH
+# Confirmar que backup_log está en PATH
 $ which backup_log
 /usr/local/bin/backup_log
 
-# Confirmar que el script es ejecutable
-$ ls -la myBackup.sh
--rwxr-xr-x 1 usuario grupo 12345 Apr 16 2026 myBackup.sh
+# Confirmar que myBackup está en PATH
+$ which myBackup
+/usr/local/bin/myBackup
 
 # Ver la ayuda
-$ ./myBackup.sh -h
+$ myBackup -h
 ```
 ## Uso
 ### Uso basico
