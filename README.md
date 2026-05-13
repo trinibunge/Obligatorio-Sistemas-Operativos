@@ -180,28 +180,56 @@ $ which myBackup
 # Ver la ayuda
 $ myBackup -h
 ```
+### Configuración de GPG (para backups encriptados)
+
+Para utilizar la opción de encriptación (`-e`), es necesario contar con una clave GPG válida configurada localmente.
+
+#### Generar una clave GPG
+
+```bash
+gpg --full-generate-key
+```
+
+Configuración recomendada:
+- Tipo de clave: RSA and RSA
+- Tamaño: 4096 bits
+- Expiración: 0 (sin expiración)
+
+#### Verificar claves disponibles
+
+```bash
+gpg --list-keys
+```
+
+#### Configurar destinatario en `.myBackup.conf`
+
+```bash
+GPG_RECIPIENT="trini@test.com"
+```
+
+El valor debe coincidir con el email o ID de una clave GPG existente en el sistema.
 ## Uso
 ### Uso basico
 ```bash
 # Backup simple del directorio de documentos
-./myBackup.sh -d ~/Documentos
+./myBackup.sh -d ~/Documents
 
 # Backup a ubicación específica
-./myBackup.sh -d ~/Documentos -o /mnt/backups
+./myBackup.sh -d ~/Documents -o ~/mis_backups
 
 # Modo verbose (ver detalles)
-./myBackup.sh -d ~/Documentos -v
+./myBackup.sh -d ~/Documents -v
 
 # Sin compresión (para ficheros ya comprimidos)
-./myBackup.sh -d ~/Documentos -n
+./myBackup.sh -d ~/Documents -n
 ```
 ### Uso avanzado
 ```bash
 # Backup encriptado con GPG
-./myBackup.sh -d ~/Documentos -e
+./myBackup.sh -d ~/Documents -e
 
 # Retención personalizada (15 días)
-./myBackup.sh -d ~/Documentos -r 15
+./myBackup.sh -d ~/Documents -r 15
 
 # Usar archivo de configuración alternativo
 ./myBackup.sh -c /etc/mybackup/config.conf
