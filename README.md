@@ -381,7 +381,12 @@ ln -s ~/test_data/file1.bin ~/test_data/link_test
 
 ## Parte 2 — Verificación de restauración (integridad)
 
-Se verificó el contenido del backup generado **listando archivos dentro del tar** (sin extraer), usando el último backup encriptado creado.
+Se verificó que el backup encriptado:
+1) se puede **decriptar** correctamente,
+2) el tar resultante se puede **listar**,
+3) y la restauración resulta **idéntica** al origen comparando checksums (sha256).
+
+### Listado del contenido (sanity check)
 
 Comandos ejecutados:
 
@@ -417,7 +422,31 @@ test_data/small_files/f_1422.txt
 test_data/small_files/f_1151.txt
 ```
 
-**Conclusión:** el backup encriptado contiene la estructura esperada del dataset.
+### Restauración + verificación de integridad (checksums)
+
+Se extrajo el backup a un directorio temporal y se comparó el contenido de archivos con SHA-256.
+
+Comandos ejecutados:
+
+```bash
+BACKUP_GPG=$(ls -1t ~/backups/*.gpg | head -n 1)
+
+rm -rf /tmp/restore_test
+mkdir -p /tmp/restore_test
+gpg -d "$BACKUP_GPG" 2>/dev/null | tar -xzf - -C /tmp/restore_test
+
+( cd ~/test_data && find . -type f -exec sha256sum {} \; | sort ) > /tmp/orig.sha
+( cd /tmp/restore_test/test_data && find . -type f -exec sha256sum {} \; | sort ) > /tmp/rest.sha
+diff /tmp/orig.sha /tmp/rest.sha && echo "OK: checksums coinciden"
+```
+
+Salida:
+
+```text
+OK: checksums coinciden
+```
+
+**Nota:** `diff -r` sobre el árbol completo falla en presencia de symlinks circulares (ej: `symlink_loop/a` y `symlink_loop/b`), por lo que se utilizó verificación por checksums de archivos regulares.
 
 ---
 
@@ -467,26 +496,15 @@ test_data/small_files/f_1151.txt
 
 ---
 
-### Caso D — Interrupción manual (Ctrl+C)
+### Caso D — Interrupción manual (Ctrl+C) (hallazgo)
 
-- Se agregó archivo grande para extender ejecución:
-  ```bash
-  dd if=/dev/urandom of=~/test_data/big_interrupt.bin bs=1M count=1024
-  ```
-- Se interrumpió el proceso con `Ctrl+C`:
-  ```bash
-  [INFO]  Iniciando backup...
-  ^C
-  ```
+- Se interrumpió el proceso con `Ctrl+C`.
 
 **Resultado observado:**
 - Quedó un `.tar.gz` parcial:
   - `backup_20260513_135453.tar.gz` (**399M**)
-- Se detectaron archivos `.tar.gz` sin cifrar en el destino:
-  - `backup_20260513_134653.tar.gz` (201M)
-  - `backup_20260513_135453.tar.gz` (399M)
 
-**Conclusión:** el script no limpia automáticamente artefactos parciales ante interrupción.
+**Conclusión:** al interrumpir, pueden quedar artefactos parciales. Se recomienda implementar `trap` y archivos temporales (`.part`) para limpieza automática.
 
 ---
 
@@ -506,14 +524,31 @@ test_data/small_files/f_1151.txt
 
 ---
 
+### Caso F — Carga alta (archivo grande ~1GiB)
+
+Se probó con un archivo adicional de 1GiB para aumentar carga de I/O y CPU.
+
+Resultado:
+- Backup: `backup_20260513_145101.tar.gz.gpg` (**1.2G**)
+- Elapsed: **0:32.53**
+- CPU: **83%**
+- File system inputs: **3651904**
+- File system outputs: **5018096**
+- Exit: **0**
+
+---
+
 ## Parte 2 — Conclusiones
 
-- En UTM/QEMU (Ubuntu aarch64, 4 vCPU, 3.3GiB RAM), `myBackup.sh` tuvo tiempos estables (~4–4.5s) para el dataset de pruebas.
+- En UTM/QEMU (Ubuntu aarch64, 4 vCPU, 3.3GiB RAM), `myBackup.sh` tuvo tiempos estables (~4–4.5s) para el dataset base.
 - Debido a que el dataset incluye datos aleatorios (`/dev/urandom`), la compresión gzip aporta poca reducción de tamaño; por eso los backups quedan alrededor de 201–202MB.
+- Verificación de integridad:
+  - el backup encriptado se decripta correctamente, se lista y al restaurarlo los **checksums coinciden** con el origen.
 - Robustez validada:
   - **Disco casi lleno (97%)**: completó exitosamente.
   - **Permisos**: falla controlada con exit status 1.
   - **Symlinks (externo y circular)**: completa sin colgarse.
-  - **Interrupción**: deja archivo parcial `.tar.gz` (mejora pendiente con `trap`).
   - **50k archivos**: completa correctamente.
+- Hallazgo:
+  - **Interrupción (Ctrl+C)**: puede dejar archivo parcial `.tar.gz` (mejora pendiente con `trap` + temporales).
 
