@@ -496,15 +496,38 @@ OK: checksums coinciden
 
 ---
 
-### Caso D — Interrupción manual (Ctrl+C) (hallazgo)
+### Caso D — Interrupción manual (Ctrl+C)
 
-- Se interrumpió el proceso con `Ctrl+C`.
+**Antes (hallazgo del primer ciclo de pruebas):**
 
-**Resultado observado:**
-- Quedó un `.tar.gz` parcial:
-  - `backup_20260513_135453.tar.gz` (**399M**)
+Al interrumpir el proceso con `Ctrl+C` durante un backup grande, quedaba un `.tar.gz` parcial en el destino, indistinguible de un backup válido:
 
-**Conclusión:** al interrumpir, pueden quedar artefactos parciales. Se recomienda implementar `trap` y archivos temporales (`.part`) para limpieza automática.
+```bash
+backup_20260513_135453.tar.gz  (399M, truncado)
+```
+
+**Solución implementada:**
+
+Se modificó `hacer_backup()` con dos cambios:
+
+1. **Archivo temporal `.part`**: `tar` escribe a `backup_<timestamp>.tar.gz.part` (nombre no oficial). Solo cuando termina sin error se hace `mv` atómico al nombre final.
+2. **`trap cleanup_parcial INT TERM HUP`**: ante cualquier señal de interrupción, se eliminan los artefactos parciales (`.part`, `.tar.gz` huérfano si GPG estaba en curso, `.gpg` truncado) y se sale con código 130. El trap se desactiva al terminar exitosamente con `trap - INT TERM HUP`.
+
+**Verificación post-fix:**
+
+```bash
+$ dd if=/dev/urandom of=~/test_data/big.bin bs=1M count=1024
+$ ./myBackup.sh -d ~/test_data -v &
+$ PID=$!
+$ sleep 2 && kill -INT $PID
+
+[ABORT] Backup interrumpido. Limpieza realizada.
+
+$ ls -la ~/backups/ | grep -E '\.(part|tar)'
+(vacío)
+```
+
+**Conclusión:** ante interrupciones (INT/TERM/HUP), el sistema ahora elimina automáticamente artefactos parciales. No quedan archivos `.tar.gz` truncados que puedan confundirse con backups válidos.
 
 ---
 
