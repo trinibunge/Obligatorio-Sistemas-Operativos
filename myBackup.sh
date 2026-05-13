@@ -190,7 +190,6 @@ hacer_backup() {
     fi
 
     mv -f "$archivo_tmp" "$archivo_final"
-    trap - INT TERM
 
     archivo_destino="$archivo_final"
 
@@ -219,6 +218,7 @@ hacer_backup() {
     # Limpiar backups viejos
     limpiar_backups_viejos
 
+    trap - INT TERM
     echo -e "${VERDE}[OK]${NC} Backup completado: $archivo_destino ($tamanio)"
     log "INFO" "Backup completado exitosamente"
 }
