@@ -92,7 +92,6 @@ El sistema permite:
 - cron (automatización)
 - gcc + make (para compilar utilidad C)
 
-```
 ## Instalación
 
 ### Dependencias por sistema
@@ -125,7 +124,7 @@ cd mybackup
 # 2. Compilar el programa auxiliar C
 make
 
-# 3. Instalar el sistema 
+# 3. Instalar el sistema
 sudo make install
 
 # 4. Copiar archivo de configuración al HOME
@@ -180,11 +179,14 @@ $ which myBackup
 # Ver la ayuda
 $ myBackup -h
 ```
-### Configuración de GPG (para backups encriptados)
+
+---
+
+## Configuración de GPG (para backups encriptados)
 
 Para utilizar la opción de encriptación (`-e`), es necesario contar con una clave GPG válida configurada localmente.
 
-#### Generar una clave GPG
+### Generar una clave GPG
 
 ```bash
 gpg --full-generate-key
@@ -195,22 +197,35 @@ Configuración recomendada:
 - Tamaño: 4096 bits
 - Expiración: 0 (sin expiración)
 
-#### Verificar claves disponibles
+### Verificar claves disponibles
 
 ```bash
 gpg --list-keys
 ```
 
-#### Configurar destinatario en `.myBackup.conf`
+### Configurar destinatario en `.myBackup.conf`
 
 ```bash
-GPG_RECIPIENT="trini@test.com"
+GPG_RECIPIENT="tu-email@ejemplo.com"
 ```
 
 El valor debe coincidir con el email o ID de una clave GPG existente en el sistema.
+
+> Nota: si no existe una clave GPG válida para el destinatario configurado, la encriptación fallará.
+
+---
+
 ## Uso
-### Uso basico
+
+> Por defecto, el sistema utiliza `$HOME/Documents` como directorio origen.
+> Este valor puede modificarse en `~/.myBackup.conf` o sobrescribirse mediante `-d`.
+
+### Uso básico
+
 ```bash
+# Backup usando el directorio configurado por defecto
+./myBackup.sh
+
 # Backup simple del directorio de documentos
 ./myBackup.sh -d ~/Documents
 
@@ -223,7 +238,11 @@ El valor debe coincidir con el email o ID de una clave GPG existente en el siste
 # Sin compresión (para ficheros ya comprimidos)
 ./myBackup.sh -d ~/Documents -n
 ```
+
+---
+
 ### Uso avanzado
+
 ```bash
 # Backup encriptado con GPG
 ./myBackup.sh -d ~/Documents -e
@@ -240,15 +259,17 @@ sudo nano /etc/mybackup/config.conf
 
 # Ejecutar usando esa configuración
 ./myBackup.sh -c /etc/mybackup/config.conf
+
 # Instalar en cron para automatización
-./myBackup.sh -d ~/Documentos -o ~/backups -i
+./myBackup.sh -d ~/Documents -o ~/backups -i
 
 # Interfaz interactiva (menú)
 ./myBackup.sh -m
 ```
-### Opciones de líneas de comandos
+### Opciones de línea de comandos
+
 Opciones:
-  -d <directorio>   Directorio origen del backup (obligatorio)
+  -d <directorio>   Directorio origen del backup (sobrescribe ORIGEN del config)
   -o <destino>      Directorio destino (default: ~/backups)
   -v                Verbose: mostrar detalles en pantalla
   -n                No comprimir (por defecto comprime con gzip)
@@ -259,18 +280,29 @@ Opciones:
   -m                Abrir menú interactivo (requiere dialog)
   -h                Mostrar esta ayuda
 
+---
+
 ## Configuración
-El archivo de configuración usa formato clave=valor de Bash y se carga automáticamente. (~/.myBackup.conf)
- ```bash
-  
-  # =============================================================================
+
+El archivo de configuración utiliza formato clave=valor de Bash y se carga automáticamente desde:
+
+```bash
+~/.myBackup.conf
+```
+
+Los parámetros definidos en línea de comandos tienen prioridad sobre los valores configurados en este archivo.
+
+```bash
+# =============================================================================
 # .myBackup.conf — Configuración de myBackup
 # =============================================================================
 
-# Directorio origen del backup (se puede sobreescribir con -d)
-ORIGEN=""
+# Directorio origen del backup
+# Puede sobrescribirse mediante -d
+ORIGEN="$HOME/Documents"
 
-# Directorio destino (se puede sobreescribir con -o)
+# Directorio destino
+# Puede sobrescribirse mediante -o
 DESTINO="$HOME/backups"
 
 # Días que se conservan los backups antes de eliminarlos automáticamente
@@ -296,6 +328,8 @@ FRECUENCIA="0 2 * * *"
 # Archivo de log
 LOG_FILE="$HOME/.mybackup.log"
 ```
+
+> Nota: si el directorio definido en `ORIGEN` no existe, el sistema mostrará un error y cancelará la ejecución del backup.
 ### Precedencia de Configuración
 
 - Archivo de configuración (~/.myBackup.conf) — se carga primero
