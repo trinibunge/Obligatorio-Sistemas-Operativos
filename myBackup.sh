@@ -1,6 +1,5 @@
-
 #!/bin/bash
- 
+
 #############################################################################
 # myBackup - Script de Backup Automático para Linux
 # Descripción: Automatiza tareas de backup con soporte para encriptación,
@@ -13,23 +12,15 @@ DESTINO="$HOME/backups"
 VERBOSE=false
 COMPRIMIR=true
 ENCRIPTAR=false
-RETENCION=7          # días que se guardan los backups
-FRECUENCIA="0 2 * * *"  # cron: todos los días a las 2am
+RETENCION=7              # días que se guardan los backups
+FRECUENCIA="0 2 * * *"   # cron: todos los días a las 2am
 LOG_FILE="$HOME/.mybackup.log"
 CONF_FILE="$HOME/.myBackup.conf"
-
-# ---------------------------------------------------------------------------
-# Colores para output
-# ---------------------------------------------------------------------------
 ROJO='\033[0;31m'
 VERDE='\033[0;32m'
 AMARILLO='\033[1;33m'
 AZUL='\033[0;34m'
 NC='\033[0m' # sin color
-
-# ---------------------------------------------------------------------------
-# Funciones auxiliares
-# ---------------------------------------------------------------------------
 
 log() {
     local nivel="$1"
@@ -133,7 +124,6 @@ limpiar_backups_viejos() {
         fi
     fi
 }
-
 hacer_backup() {
     # Validaciones
     if [ -z "$ORIGEN" ]; then
@@ -150,49 +140,73 @@ hacer_backup() {
     mkdir -p "$DESTINO"
 
     # Nombre del archivo de backup con timestamp
-    local timestamp
+    local timestamp nombre_base archivo_destino archivo_tmp
     timestamp=$(date '+%Y%m%d_%H%M%S')
-    local nombre_base="backup_${timestamp}"
-    local archivo_destino
+    nombre_base="backup_${timestamp}"
+
+    if $COMPRIMIR; then
+        archivo_destino="$DESTINO/${nombre_base}.tar.gz"
+    else
+        archivo_destino="$DESTINO/${nombre_base}.tar"
+    fi
+    archivo_tmp="${archivo_destino}.part"
+
+    # --- Trap: ante INT/TERM/HUP, limpia todo lo que este run pudo haber generado ---
+    cleanup_parcial() {
+        rm -f "$archivo_tmp" "$archivo_destino" "${archivo_destino}.gpg" 2>/dev/null
+        log "WARN" "Backup interrumpido por señal: artefactos parciales eliminados"
+        echo -e "\n${ROJO}[ABORT]${NC} Backup interrumpido. Limpieza realizada."
+        exit 130
+    }
+    trap cleanup_parcial INT TERM HUP
 
     log "INFO" "Iniciando backup: $ORIGEN -> $DESTINO"
 
-    # Comprimir o no
+    # 1) Empaquetar en archivo .part (todavía no es "oficial")
     if $COMPRIMIR; then
-        archivo_destino="$DESTINO/${nombre_base}.tar.gz"
-        tar -czf "$archivo_destino" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")" 2>/dev/null
+        tar -czf "$archivo_tmp" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")" 2>/dev/null
     else
-        archivo_destino="$DESTINO/${nombre_base}.tar"
-        tar -cf "$archivo_destino" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")" 2>/dev/null
+        tar -cf "$archivo_tmp" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")" 2>/dev/null
     fi
 
     if [ $? -ne 0 ]; then
+        rm -f "$archivo_tmp"
+        trap - INT TERM HUP
         log "ERROR" "Falló la creación del backup"
         echo -e "${ROJO}[ERROR]${NC} Falló la creación del backup"
         exit 1
     fi
 
+    # 2) Rename atómico: a partir de acá el archivo es válido
+    mv "$archivo_tmp" "$archivo_destino"
+
     local tamanio
     tamanio=$(du -sh "$archivo_destino" | cut -f1)
     log "INFO" "Backup creado: $archivo_destino ($tamanio)"
 
-    # Encriptar si se pidió
+    # 3) Encriptar (si corresponde). El trap sigue activo durante GPG.
     if $ENCRIPTAR; then
         if [ -z "$GPG_RECIPIENT" ]; then
+            rm -f "$archivo_destino"
+            trap - INT TERM HUP
             echo -e "${ROJO}[ERROR]${NC} Encriptación activada pero GPG_RECIPIENT no está configurado en .myBackup.conf"
             exit 1
         fi
         gpg --recipient "$GPG_RECIPIENT" --encrypt "$archivo_destino"
-        if [ $? -eq 0 ]; then
-            rm "$archivo_destino"   # eliminar versión sin encriptar
-            archivo_destino="${archivo_destino}.gpg"
-            log "INFO" "Backup encriptado: $archivo_destino"
-        else
+        if [ $? -ne 0 ]; then
+            rm -f "$archivo_destino" "${archivo_destino}.gpg"
+            trap - INT TERM HUP
             log "ERROR" "Falló la encriptación"
             echo -e "${ROJO}[ERROR]${NC} Falló la encriptación"
             exit 1
         fi
+        rm "$archivo_destino"   # eliminar versión sin encriptar
+        archivo_destino="${archivo_destino}.gpg"
+        log "INFO" "Backup encriptado: $archivo_destino"
     fi
+
+    # 4) Éxito: desactivar trap antes de continuar
+    trap - INT TERM HUP
 
     # Limpiar backups viejos
     limpiar_backups_viejos
@@ -200,10 +214,6 @@ hacer_backup() {
     echo -e "${VERDE}[OK]${NC} Backup completado: $archivo_destino ($tamanio)"
     log "INFO" "Backup completado exitosamente"
 }
-
-# ---------------------------------------------------------------------------
-# Menú interactivo con dialog
-# ---------------------------------------------------------------------------
 menu_interactivo() {
     if ! command -v dialog &>/dev/null; then
         echo -e "${ROJO}[ERROR]${NC} 'dialog' no está instalado."
@@ -293,11 +303,6 @@ EOF
     log "INFO" "Configuración guardada en $CONF_FILE"
 }
 
-# ---------------------------------------------------------------------------
-# Parseo de argumentos
-# ---------------------------------------------------------------------------
-
-# Primero cargar conf, después CLI sobreescribe
 cargar_conf
 
 while getopts "d:o:r:c:vneimh" opt; do
@@ -315,10 +320,6 @@ while getopts "d:o:r:c:vneimh" opt; do
         *) mostrar_ayuda; exit 1 ;;
     esac
 done
-
-# ---------------------------------------------------------------------------
-# Ejecución
-# ---------------------------------------------------------------------------
 
 verificar_dependencias
 
