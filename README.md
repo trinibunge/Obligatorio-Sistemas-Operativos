@@ -231,9 +231,15 @@ El valor debe coincidir con el email o ID de una clave GPG existente en el siste
 # Retención personalizada (15 días)
 ./myBackup.sh -d ~/Documents -r 15
 
-# Usar archivo de configuración alternativo
-./myBackup.sh -c /etc/mybackup/config.conf
+# Crear configuración alternativa
+sudo mkdir -p /etc/mybackup
+sudo cp myBackup.conf /etc/mybackup/config.conf
 
+# Editar configuración alternativa
+sudo nano /etc/mybackup/config.conf
+
+# Ejecutar usando esa configuración
+./myBackup.sh -c /etc/mybackup/config.conf
 # Instalar en cron para automatización
 ./myBackup.sh -d ~/Documentos -o ~/backups -i
 
