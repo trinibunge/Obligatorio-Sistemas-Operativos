@@ -2,7 +2,8 @@
 
 ## **Proyecto Obligatorio de Sistemas Operativos**
 
-[![Maximiliano López](https://img.shields.io/badge/GitHub-Maximiliano_López-B7E3FF?logo=github&logoColor=black)](https://github.com/maaxilopp) [![Trinidad Bunge](https://img.shields.io/badge/GitHub-Trinidad_Bunge-FFD966?logo=github&logoColor=black)](https://github.com/trinibun)
+[![Maximiliano López](https://img.shields.io/badge/GitHub-Maximiliano_López-B7E3FF?logo=github&logoColor=black)](https://github.com/maaxilopp)
+[![Trinidad Bunge](https://img.shields.io/badge/GitHub-Trinidad_Bunge-FFD966?logo=github&logoColor=black)](https://github.com/trinibun)
 
 ---
 
@@ -20,6 +21,7 @@
   - [Parte 2 — Metodología](#parte-2--metodología)
   - [Parte 2 — Dataset de benchmark](#parte-2--dataset-de-benchmark)
   - [Parte 2 — Resultados (performance)](#parte-2--resultados-performance)
+  - [Parte 2 — Verificación de restauración (integridad)](#parte-2--verificación-de-restauración-integridad)
   - [Parte 2 — Casos de borde / Robustez](#parte-2--casos-de-borde--robustez)
   - [Parte 2 — Conclusiones](#parte-2--conclusiones)
 
@@ -304,6 +306,7 @@ $ nproc
 4
 
 $ free -h
+               total        used        free      shared  buff/cache   available
 Mem:           3.3Gi       1.2Gi       215Mi        47Mi       2.1Gi       2.1Gi
 Swap:          3.8Gi       296Ki       3.8Gi
 
@@ -323,6 +326,19 @@ $ df -h
   - Max RSS (memoria pico)
   - File system inputs/outputs
   - Exit status
+
+**Nota sobre configuración:** durante estas pruebas, el archivo `~/.myBackup.conf` estaba configurado con `ENCRIPTAR=true` (y con un `GPG_RECIPIENT` válido).  
+Por ese motivo, incluso en ejecuciones sin `-e`, el comportamiento “por defecto” en este entorno generó backups con extensión `.gpg`.
+
+Configuración utilizada (extracto):
+
+```bash
+ORIGEN="/home/trini/Documents"
+DESTINO="/home/trini/backups"
+COMPRIMIR=true
+ENCRIPTAR=true
+GPG_RECIPIENT="trini@test.com"
+```
 
 ---
 
@@ -357,9 +373,51 @@ ln -s ~/test_data/file1.bin ~/test_data/link_test
 | Test | Flags | Formato final | Tamaño | Elapsed | User | Sys | Max RSS | Exit |
 |------|-------|---------------|--------|---------|------|-----|--------:|:----:|
 | 1 | `-v` | `.tar.gz.gpg` | 201M | 4.19s | 3.89s | 0.44s | 6940 KB | 0 |
-| 2 | (default) | `.tar.gz.gpg` | 201M | 4.07s | 3.83s | 0.38s | 6960 KB | 0 |
+| 2 | (config `ENCRIPTAR=true`) | `.tar.gz.gpg` | 201M | 4.07s | 3.83s | 0.38s | 6960 KB | 0 |
 | 3 | `-n -v` | `.tar.gpg` | 202M | 3.92s | 3.44s | 0.47s | 6968 KB | 0 |
 | 4 | `-e -v` | `.tar.gz.gpg` | 201M | 4.04s | 3.82s | 0.36s | 6920 KB | 0 |
+
+---
+
+## Parte 2 — Verificación de restauración (integridad)
+
+Se verificó el contenido del backup generado **listando archivos dentro del tar** (sin extraer), usando el último backup encriptado creado.
+
+Comandos ejecutados:
+
+```bash
+BACKUP_GPG=$(ls -1t ~/backups/*.gpg | head -n 1)
+echo "Backup usado: $BACKUP_GPG"
+gpg -d "$BACKUP_GPG" 2>/dev/null | tar -tzf - | head -n 20
+```
+
+Salida (extracto):
+
+```text
+Backup usado: /home/trini/backups/backup_20260513_135605.tar.gz.gpg
+test_data/
+test_data/file2.bin
+test_data/perm_test/
+test_data/perm_test/no_list_dir/
+test_data/perm_test/no_list_dir/inside.txt
+test_data/perm_test/no_read.txt
+test_data/small_files/
+test_data/small_files/f_1959.txt
+test_data/small_files/f_1187.txt
+test_data/small_files/f_362.txt
+test_data/small_files/f_979.txt
+test_data/small_files/f_1017.txt
+test_data/small_files/f_986.txt
+test_data/small_files/f_998.txt
+test_data/small_files/f_1741.txt
+test_data/small_files/f_1149.txt
+test_data/small_files/f_1380.txt
+test_data/small_files/f_348.txt
+test_data/small_files/f_1422.txt
+test_data/small_files/f_1151.txt
+```
+
+**Conclusión:** el backup encriptado contiene la estructura esperada del dataset.
 
 ---
 
@@ -428,7 +486,7 @@ ln -s ~/test_data/file1.bin ~/test_data/link_test
   - `backup_20260513_134653.tar.gz` (201M)
   - `backup_20260513_135453.tar.gz` (399M)
 
-**Conclusión:** el script no limpia automáticamente artefactos parciales ante interrupción.  
+**Conclusión:** el script no limpia automáticamente artefactos parciales ante interrupción.
 
 ---
 
@@ -451,6 +509,7 @@ ln -s ~/test_data/file1.bin ~/test_data/link_test
 ## Parte 2 — Conclusiones
 
 - En UTM/QEMU (Ubuntu aarch64, 4 vCPU, 3.3GiB RAM), `myBackup.sh` tuvo tiempos estables (~4–4.5s) para el dataset de pruebas.
+- Debido a que el dataset incluye datos aleatorios (`/dev/urandom`), la compresión gzip aporta poca reducción de tamaño; por eso los backups quedan alrededor de 201–202MB.
 - Robustez validada:
   - **Disco casi lleno (97%)**: completó exitosamente.
   - **Permisos**: falla controlada con exit status 1.
@@ -458,7 +517,3 @@ ln -s ~/test_data/file1.bin ~/test_data/link_test
   - **Interrupción**: deja archivo parcial `.tar.gz` (mejora pendiente con `trap`).
   - **50k archivos**: completa correctamente.
 
-Recomendaciones:
-- Agregar `trap` para limpieza en interrupciones.
-- Mejorar reporting de errores (indicar archivo/directorio que falla en permisos).
-- Para mediciones con `tee`, usar `pipefail` + `PIPESTATUS` para capturar exit codes reales.
