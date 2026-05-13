@@ -572,6 +572,5 @@ Resultado:
   - **Permisos**: falla controlada con exit status 1.
   - **Symlinks (externo y circular)**: completa sin colgarse.
   - **50k archivos**: completa correctamente.
-- Hallazgo:
-  - **Interrupción (Ctrl+C)**: puede dejar archivo parcial `.tar.gz` (mejora pendiente con `trap` + temporales).
-
+  - Hallazgo y resolución:
+  - **Interrupción (Ctrl+C)**: en la primera vuelta de pruebas dejaba un `.tar.gz` parcial. Se resolvió con `trap INT TERM HUP` + archivos `.part` y `mv` atómico en `hacer_backup()`. Verificado: no quedan artefactos parciales tras la interrupción.
