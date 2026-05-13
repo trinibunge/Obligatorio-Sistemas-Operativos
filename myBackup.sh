@@ -173,9 +173,13 @@ hacer_backup() {
 
     cleanup_parcial() {
         if [ "$backup_completo" = false ]; then
+            # Matar tar si todavía está corriendo
+            [ -n "$TAR_PID" ] && kill "$TAR_PID" 2>/dev/null && wait "$TAR_PID" 2>/dev/null
             [ -n "$archivo_tmp" ]   && rm -f "$archivo_tmp" 2>/dev/null
             [ -n "$archivo_final" ] && rm -f "$archivo_final" 2>/dev/null
             [ -n "$archivo_final" ] && rm -f "${archivo_final}.gpg" 2>/dev/null
+            # Eliminar cualquier .part rezagado en el destino
+            rm -f "$DESTINO"/*.part 2>/dev/null
             log "WARN" "Backup interrumpido (SIGINT/SIGTERM/SIGHUP). Archivos parciales eliminados."
             echo -e "\n${ROJO}[ABORT]${NC} Backup interrumpido. Limpieza realizada."
         fi
@@ -187,14 +191,19 @@ hacer_backup() {
     log "INFO" "Iniciando backup: $ORIGEN -> $DESTINO"
 
     # Comprimir o no (escribir primero a .part y luego renombrar)
+    # tar corre en background para que el trap pueda interceptar señales mientras comprime
     if $COMPRIMIR; then
         archivo_final="$DESTINO/${nombre_base}.tar.gz"
         archivo_tmp="${archivo_final}.part"
-        tar -czf "$archivo_tmp" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")"
+        tar -czf "$archivo_tmp" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")" &
+        TAR_PID=$!
+        wait $TAR_PID
     else
         archivo_final="$DESTINO/${nombre_base}.tar"
         archivo_tmp="${archivo_final}.part"
-        tar -cf "$archivo_tmp" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")"
+        tar -cf "$archivo_tmp" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")" &
+        TAR_PID=$!
+        wait $TAR_PID
     fi
 
     if [ $? -ne 0 ]; then
