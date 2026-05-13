@@ -429,7 +429,6 @@ ln -s ~/test_data/file1.bin ~/test_data/link_test
   - `backup_20260513_135453.tar.gz` (399M)
 
 **Conclusión:** el script no limpia automáticamente artefactos parciales ante interrupción.  
-**Mejora recomendada:** implementar `trap` para `SIGINT/SIGTERM` y borrar el archivo parcial.
 
 ---
 
