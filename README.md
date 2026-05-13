@@ -4,6 +4,7 @@
 
 [![Maximiliano López](https://img.shields.io/badge/GitHub-Maximiliano_López-B7E3FF?logo=github&logoColor=black)](https://github.com/maaxilopp) [![Trinidad Bunge](https://img.shields.io/badge/GitHub-Trinidad_Bunge-FFD966?logo=github&logoColor=black)](https://github.com/trinibun)
 
+---
 
 ## Tabla de Contenidos
 
@@ -15,11 +16,16 @@
 - [Uso](#uso)
 - [Configuración](#configuración)
 - [Benchmarks](#benchmarks)
-
+  - [Parte 2 — Entorno de pruebas (VM)](#parte-2--entorno-de-pruebas-vm)
+  - [Parte 2 — Metodología](#parte-2--metodología)
+  - [Parte 2 — Dataset de benchmark](#parte-2--dataset-de-benchmark)
+  - [Parte 2 — Resultados (performance)](#parte-2--resultados-performance)
+  - [Parte 2 — Casos de borde / Robustez](#parte-2--casos-de-borde--robustez)
+  - [Parte 2 — Conclusiones](#parte-2--conclusiones)
 
 ---
 
-##  Descripción
+## Descripción
 
 myBackup es un sistema de respaldo automático completo para Linux, diseñado para simplificar y automatizar la creación, gestión y restauración de copias de seguridad. Desarrollado como entrega obligatoria de la asignatura Sistemas Operativos, combina scripting Bash avanzado con utilidades C compiladas.
 
@@ -32,6 +38,7 @@ El sistema permite:
 - Eliminar automáticamente backups antiguos (gestión de retención)
 
 ---
+
 ## Arquitectura
 
 ### Componentes
@@ -84,13 +91,14 @@ El sistema permite:
 - Bash 4.0+
 
 ### Dependencias
-```bash
-# Herramientas esenciales
 - tar (empaquetado)
 - gzip/bzip2 (compresión)
-- gpg (encriptación)          
+- gpg (encriptación)
 - cron (automatización)
 - gcc + make (para compilar utilidad C)
+- dialog (opcional, para menú)
+
+---
 
 ## Instalación
 
@@ -112,9 +120,7 @@ Arch Linux:
 sudo pacman -S tar gzip bzip2 cronie gcc make dialog openssl gnupg
 ```
 
----
-## Instalación 
-## Instalación rápida
+### Instalación rápida
 
 ```bash
 # 1. Clonar o descargar el repositorio
@@ -168,16 +174,9 @@ cp myBackup.conf ~/.myBackup.conf
 ## Verificación post instalación
 
 ```bash
-# Confirmar que backup_log está en PATH
-$ which backup_log
-/usr/local/bin/backup_log
-
-# Confirmar que myBackup está en PATH
-$ which myBackup
-/usr/local/bin/myBackup
-
-# Ver la ayuda
-$ myBackup -h
+which backup_log
+which myBackup
+myBackup -h
 ```
 
 ---
@@ -209,8 +208,6 @@ gpg --list-keys
 GPG_RECIPIENT="tu-email@ejemplo.com"
 ```
 
-El valor debe coincidir con el email o ID de una clave GPG existente en el sistema.
-
 > Nota: si no existe una clave GPG válida para el destinatario configurado, la encriptación fallará.
 
 ---
@@ -223,62 +220,34 @@ El valor debe coincidir con el email o ID de una clave GPG existente en el siste
 ### Uso básico
 
 ```bash
-# Backup usando el directorio configurado por defecto
 ./myBackup.sh
-
-# Backup simple del directorio de documentos
 ./myBackup.sh -d ~/Documents
-
-# Backup a ubicación específica
 ./myBackup.sh -d ~/Documents -o ~/mis_backups
-
-# Modo verbose (ver detalles)
 ./myBackup.sh -d ~/Documents -v
-
-# Sin compresión (para ficheros ya comprimidos)
 ./myBackup.sh -d ~/Documents -n
 ```
-
----
 
 ### Uso avanzado
 
 ```bash
-# Backup encriptado con GPG
 ./myBackup.sh -d ~/Documents -e
-
-# Retención personalizada (15 días)
 ./myBackup.sh -d ~/Documents -r 15
-
-# Crear configuración alternativa
-sudo mkdir -p /etc/mybackup
-sudo cp myBackup.conf /etc/mybackup/config.conf
-
-# Editar configuración alternativa
-sudo nano /etc/mybackup/config.conf
-
-# Ejecutar usando esa configuración
-./myBackup.sh -c /etc/mybackup/config.conf
-
-# Instalar en cron para automatización
 ./myBackup.sh -d ~/Documents -o ~/backups -i
-
-# Interfaz interactiva (menú)
 ./myBackup.sh -m
 ```
+
 ### Opciones de línea de comandos
 
-Opciones:
-  -d <directorio>   Directorio origen del backup (sobrescribe ORIGEN del config)
-  -o <destino>      Directorio destino (default: ~/backups)
-  -v                Verbose: mostrar detalles en pantalla
-  -n                No comprimir (por defecto comprime con gzip)
-  -e                Encriptar con GPG
-  -r <días>         Retención: días a guardar backups (default: 7)
-  -c <archivo>      Archivo de configuración alternativo
-  -i                Instalar en cron con frecuencia FRECUENCIA
-  -m                Abrir menú interactivo (requiere dialog)
-  -h                Mostrar esta ayuda
+- `-d <directorio>` Directorio origen del backup
+- `-o <destino>` Directorio destino
+- `-v` Verbose
+- `-n` No comprimir
+- `-e` Encriptar con GPG
+- `-r <días>` Retención
+- `-c <archivo>` Config alternativo
+- `-i` Instalar en cron
+- `-m` Menú interactivo
+- `-h` Ayuda
 
 ---
 
@@ -290,159 +259,207 @@ El archivo de configuración utiliza formato clave=valor de Bash y se carga auto
 ~/.myBackup.conf
 ```
 
-Los parámetros definidos en línea de comandos tienen prioridad sobre los valores configurados en este archivo.
+Ejemplo:
 
 ```bash
-# =============================================================================
-# .myBackup.conf — Configuración de myBackup
-# =============================================================================
-
-# Directorio origen del backup
-# Puede sobrescribirse mediante -d
 ORIGEN="$HOME/Documents"
-
-# Directorio destino
-# Puede sobrescribirse mediante -o
 DESTINO="$HOME/backups"
-
-# Días que se conservan los backups antes de eliminarlos automáticamente
-# 0 = no eliminar nunca
 RETENCION=7
-
-# Comprimir el backup con gzip (true/false)
 COMPRIMIR=true
-
-# Encriptar el backup con GPG (true/false)
 ENCRIPTAR=false
-
-# Email o ID de la clave GPG (solo si ENCRIPTAR=true)
 GPG_RECIPIENT="tu-email@ejemplo.com"
-
-# Frecuencia de ejecución automática (formato cron)
-# Minuto Hora DiaMes Mes DíaSemana
-# "0 2 * * *"     → todos los días a las 2:00am
-# "0 */6 * * *"   → cada 6 horas
-# "0 2 * * 1"     → lunes a las 2:00am
 FRECUENCIA="0 2 * * *"
-
-# Archivo de log
 LOG_FILE="$HOME/.mybackup.log"
 ```
 
-> Nota: si el directorio definido en `ORIGEN` no existe, el sistema mostrará un error y cancelará la ejecución del backup.
-### Precedencia de Configuración
+---
 
-- Archivo de configuración (~/.myBackup.conf) — se carga primero
-- Argumentos CLI (-d, -o, -r, etc.) — sobreescriben la configuración
-- Valores por defecto — se usan si no se especifica nada
+## Benchmarks
 
- ## Benchmarks
 ### Metodología de Testing
 
 Los benchmarks miden el rendimiento de myBackup en diferentes entornos y cargas de trabajo.
 
-#### Herramientas de Medición
+Herramientas usadas:
+- `time` y `/usr/bin/time -v` para tiempo/CPU/memoria/I/O
+- `iostat` (opcional) para I/O en paralelo
 
-Todos los tiempos se midieron con el comando `time` de Bash:
+> Nota: los resultados de esta sección incluyen una Parte 2 con evidencia real en VM UTM/QEMU.
 
-```bash
-time ./myBackup.sh -d ~/test_data -o ~/backups -v
-```
+---
 
-El uso de CPU y memoria se capturó con:
+## Parte 2 — Entorno de pruebas (VM)
 
-```bash
-/usr/bin/time -v ./myBackup.sh -d ~/test_data -o ~/backups
-```
+**Fecha:** 2026-05-13  
+**Host:** macOS + **UTM (QEMU)**  
+**Guest:** Ubuntu (aarch64)
 
-El I/O de disco se monitoreó en paralelo con:
-
-```bash
-iostat -x 1 &
-./myBackup.sh -d ~/test_data -o ~/backups
-kill %1
-```
-
-Cada prueba se ejecutó 3 veces y se tomó el valor promedio para eliminar variaciones puntuales.
-
-### Configuración de Máquinas Virtuales Testeadas:
-
-| **VM** | **SO Base** | **SO Invitado** | **CPU** | **RAM** | **Almacenamiento** |
-|:---:|:---:|:---|:---:|:---:|:---:|
-| VM-1 |  Linux | Ubuntu 22.04 LTS | 4 cores | 8GB | 100GB SSD |
-| VM-2 |  Windows 10 | Ubuntu 20.04 LTS | 4 cores | 8GB | 100GB SSD |
-| VM-3 |  Linux | Debian 11 (Minimalista) | 2 cores | 4GB | 50GB SSD |
-| VM-4 |  Windows 10 | CentOS 7 | 4 cores | 8GB | 100GB SSD |
-
-### Resultados de Performance
-#### Test 1: Backup de Datos Mixtos (500MB)
-Configuración: Comprimido, sin encriptación
-
-| SO/Configuración      | Tiempo (seg) | Tamaño Final | Compresión | Memoria Pico |
-|----|----|----|----|-----|
-| Ubuntu 22.04 (SSD)    | 2.34s        | 145MB        | 71%        | 45MB  |
-| Ubuntu 20.04 (SSD)    | 2.67s        | 148MB        | 70%        | 48MB  |
-| Debian Minimalista    | 3.12s        | 150MB        | 70%        | 42MB  |
-| CentOS 7              | 4.01s        | 152MB        | 70%        | 50MB  |
-
-#### Test 2: Backup Encriptado (500MB, GPG)
-| SO/Configuración      | Tiempo (seg) | Tamaño Final | CPU Promedio |
-|----|----|----|----|
-| Ubuntu 22.04          | 5.23s        | 147MB        | 65%          |
-| Ubuntu 20.04          | 5.67s        | 150MB        | 68%          |
-| Debian Minimalista    | 6.45s        | 152MB        | 72%          |
-| CentOS 7              | 7.89s        | 155MB        | 75%          |
-
-#### Test 3: Respuesta a Carga (1GB, Comprimido)
-| Métrica | Valor | Observación |
-|---------|-------|-------------|
-| Tiempo Total | 4.56s | Incluye compresión gzip |
-| I/O Promedio | 220MB/s | Lectura desde SSD |
-| CPU Máximo | 85% | Durante compresión |
-| RAM Máximo | 58MB | Buffer de tar |
-| Throughput | ~219MB/s | Datos comprimidos/segundo |
-
-#### Test 4: Casos de Borde
-Prueba de estrés: Archivo muy grande (5GB)
-├─ Tiempo de copia: 18.3s
-├─ Compresión: 45% (final: 2.25GB)
-├─ Encriptación: +9.2s adicionales
-├─ RAM máximo: 127MB (buffer + overhead)
-└─  Completado sin errores
-
-Prueba de estrés: Múltiples pequeños archivos (50,000 archivos)
-├─ Tiempo total: 12.7s
-├─ Metadatos: Bien manejados por tar
-├─ CPU máximo: 72%
-└─  Completado sin errores
-
-Prueba de estrés: Archivos especiales (symlinks, pipes, sockets)
-├─ Symlinks:  Preservados correctamente
-├─ Permiso especial:  Mantenidos
-├─ Rutas largas (>255 caracteres): Soportadas por GNU tar
-└─  Completado sin errores
-
-#### Test 5: Automatización con Cron
-Ejecución automática cada 6 horas (1GB de datos). Se configuró con:
+Evidencia:
 
 ```bash
-./myBackup.sh -d ~/test_data -o ~/backups -i
-# Verificación: crontab -l
-# Monitoreo del log: tail -f ~/.mybackup.log
+$ uname -a
+Linux trini-QEMU-Virtual-Machine 6.17.0-23-generic #23-Ubuntu SMP PREEMPT_DYNAMIC Sat Apr 11 23:16:13 UTC 2026 aarch64 GNU/Linux
+
+$ nproc
+4
+
+$ free -h
+Mem:           3.3Gi       1.2Gi       215Mi        47Mi       2.1Gi       2.1Gi
+Swap:          3.8Gi       296Ki       3.8Gi
+
+$ df -h
+/dev/vda3        27G   13G   14G  49% /
 ```
 
-| **Ejecución** | **Hora** | **Tiempo** | **Tamaño** | **Estatus** |
-|:---:|:---:|:---:|:---:|:---:|
-| 1 | 00:00 | 4.12s | 520MB |  OK |
-| 2 | 06:00 | 4.08s | 518MB |  OK |
-| 3 | 12:00 | 4.19s | 521MB |  OK |
-| 4 | 18:00 | 4.15s | 519MB |  OK |
+---
 
-### Conclusiones de Performance
-- SSD vs HDD: Los backups en SSD son más rápidos
-- Encriptación GPG: Añade algo de overhead
-- Compresión gzip: Reduce el tamaño
-- Escalabilidad: Maneja correctamente archivos de 5GB+ sin degradación
-- Estabilidad: 100% de confiabilidad en ejecución automática
+## Parte 2 — Metodología
 
-Recomendación: Usar SSD para destino de backups. Encriptación recomendada para datos sensibles.
+- Medición principal: `/usr/bin/time -v`
+- Evidencia guardada con: `2>&1 | tee <archivo>.txt`
+- Métricas relevantes:
+  - Elapsed (wall clock)
+  - User/System time
+  - Max RSS (memoria pico)
+  - File system inputs/outputs
+  - Exit status
+
+---
+
+## Parte 2 — Dataset de benchmark
+
+Dataset mixto “realista”:
+
+```bash
+rm -rf ~/test_data
+rm -rf ~/backups/*
+rm -f ~/.mybackup.log ~/.myBackup.log
+mkdir -p ~/test_data
+
+# 2 archivos medianos (~200MB total)
+dd if=/dev/urandom of=~/test_data/file1.bin bs=1M count=100
+dd if=/dev/urandom of=~/test_data/file2.bin bs=1M count=100
+
+# 2000 archivos pequeños
+mkdir -p ~/test_data/small_files
+for i in $(seq 1 2000); do
+  echo "archivo de prueba $i" > ~/test_data/small_files/f_$i.txt
+done
+
+# symlink (caso especial)
+ln -s ~/test_data/file1.bin ~/test_data/link_test
+```
+
+---
+
+## Parte 2 — Resultados (performance)
+
+| Test | Flags | Formato final | Tamaño | Elapsed | User | Sys | Max RSS | Exit |
+|------|-------|---------------|--------|---------|------|-----|--------:|:----:|
+| 1 | `-v` | `.tar.gz.gpg` | 201M | 4.19s | 3.89s | 0.44s | 6940 KB | 0 |
+| 2 | (default) | `.tar.gz.gpg` | 201M | 4.07s | 3.83s | 0.38s | 6960 KB | 0 |
+| 3 | `-n -v` | `.tar.gpg` | 202M | 3.92s | 3.44s | 0.47s | 6968 KB | 0 |
+| 4 | `-e -v` | `.tar.gz.gpg` | 201M | 4.04s | 3.82s | 0.36s | 6920 KB | 0 |
+
+---
+
+## Parte 2 — Casos de borde / Robustez
+
+### Caso A — Destino casi lleno (97%)
+
+- Se llenó el filesystem con un archivo “filler” hasta dejar ~1GB libre:
+  ```bash
+  /dev/vda3        27G   25G  1.0G  97% /
+  ```
+- Resultado: **backup exitoso**
+  - Backup: `backup_20260513_134538.tar.gz.gpg` (201M)
+  - Elapsed: 4.52s
+  - Exit: 0
+
+**Conclusión:** el sistema funciona correctamente con el destino al 97% de uso.
+
+---
+
+### Caso B — Permisos (chmod 000)
+
+- Archivos/directorios sin permisos:
+  ```bash
+  d--------- no_list_dir
+  ---------- no_read.txt
+  ```
+- Resultado: **falla controlada**
+  - Mensaje: `[ERROR] Falló la creación del backup`
+  - Exit status (time): 1
+
+**Nota:** en pipelines con `tee`, `$?` refleja el exit de `tee`; para obtener el del script usar `set -o pipefail` y `${PIPESTATUS[0]}`.
+
+**Conclusión:** ante permisos insuficientes, el script detiene el backup y retorna error (comportamiento robusto).
+
+---
+
+### Caso C — Symlink fuera del árbol + symlink circular
+
+- Symlink fuera del árbol: `link_outside_hosts -> /etc/hosts`
+- Symlink circular: `a -> b`, `b -> a`
+- Resultado: **backup exitoso**
+  - Backup: `backup_20260513_134816.tar.gz.gpg` (201M)
+  - Exit: 0
+
+**Conclusión:** no se cuelga y completa el backup con symlinks especiales.
+
+---
+
+### Caso D — Interrupción manual (Ctrl+C)
+
+- Se agregó archivo grande para extender ejecución:
+  ```bash
+  dd if=/dev/urandom of=~/test_data/big_interrupt.bin bs=1M count=1024
+  ```
+- Se interrumpió el proceso con `Ctrl+C`:
+  ```bash
+  [INFO]  Iniciando backup...
+  ^C
+  ```
+
+**Resultado observado:**
+- Quedó un `.tar.gz` parcial:
+  - `backup_20260513_135453.tar.gz` (**399M**)
+- Se detectaron archivos `.tar.gz` sin cifrar en el destino:
+  - `backup_20260513_134653.tar.gz` (201M)
+  - `backup_20260513_135453.tar.gz` (399M)
+
+**Conclusión:** el script no limpia automáticamente artefactos parciales ante interrupción.  
+**Mejora recomendada:** implementar `trap` para `SIGINT/SIGTERM` y borrar el archivo parcial.
+
+---
+
+### Caso E — Stress: 50.000 archivos pequeños
+
+- Cantidad confirmada:
+  ```bash
+  50000
+  ```
+- Resultado: **backup exitoso**
+  - Backup: `backup_20260513_135605.tar.gz.gpg` (201M)
+  - Elapsed: 4.45s
+  - Max RSS: 7020 KB
+  - Exit: 0
+
+**Conclusión:** soporta 50k archivos sin errores, con leve incremento de tiempo respecto al baseline.
+
+---
+
+## Parte 2 — Conclusiones
+
+- En UTM/QEMU (Ubuntu aarch64, 4 vCPU, 3.3GiB RAM), `myBackup.sh` tuvo tiempos estables (~4–4.5s) para el dataset de pruebas.
+- Robustez validada:
+  - **Disco casi lleno (97%)**: completó exitosamente.
+  - **Permisos**: falla controlada con exit status 1.
+  - **Symlinks (externo y circular)**: completa sin colgarse.
+  - **Interrupción**: deja archivo parcial `.tar.gz` (mejora pendiente con `trap`).
+  - **50k archivos**: completa correctamente.
+
+Recomendaciones:
+- Agregar `trap` para limpieza en interrupciones.
+- Mejorar reporting de errores (indicar archivo/directorio que falla en permisos).
+- Para mediciones con `tee`, usar `pipefail` + `PIPESTATUS` para capturar exit codes reales.
