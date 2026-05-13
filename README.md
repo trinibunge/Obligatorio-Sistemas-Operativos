@@ -113,7 +113,7 @@ sudo pacman -S tar gzip bzip2 cronie gcc make dialog openssl gnupg
 ```
 
 ---
-
+## Instalación 
 ## Instalación rápida
 
 ```bash
