@@ -1,6 +1,5 @@
-
 #!/bin/bash
- 
+
 #############################################################################
 # myBackup - Script de Backup Automático para Linux
 # Descripción: Automatiza tareas de backup con soporte para encriptación,
@@ -153,24 +152,47 @@ hacer_backup() {
     local timestamp
     timestamp=$(date '+%Y%m%d_%H%M%S')
     local nombre_base="backup_${timestamp}"
-    local archivo_destino
+
+    # Archivos final y temporal (evita dejar backups corruptos si se interrumpe)
+    local archivo_destino=""
+    local archivo_final=""
+    local archivo_tmp=""
+
+    cleanup_parcial() {
+        [ -n "$archivo_tmp" ] && rm -f "$archivo_tmp" 2>/dev/null
+        [ -n "$archivo_final" ] && rm -f "$archivo_final" 2>/dev/null
+        [ -n "$archivo_final" ] && rm -f "${archivo_final}.gpg" 2>/dev/null
+        log "WARN" "Backup interrumpido (SIGINT/SIGTERM). Archivos parciales eliminados."
+        exit 130
+    }
+
+    trap cleanup_parcial INT TERM
 
     log "INFO" "Iniciando backup: $ORIGEN -> $DESTINO"
 
-    # Comprimir o no
+    # Comprimir o no (escribir primero a .part y luego renombrar)
     if $COMPRIMIR; then
-        archivo_destino="$DESTINO/${nombre_base}.tar.gz"
-        tar -czf "$archivo_destino" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")" 2>/dev/null
+        archivo_final="$DESTINO/${nombre_base}.tar.gz"
+        archivo_tmp="${archivo_final}.part"
+        tar -czf "$archivo_tmp" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")"
     else
-        archivo_destino="$DESTINO/${nombre_base}.tar"
-        tar -cf "$archivo_destino" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")" 2>/dev/null
+        archivo_final="$DESTINO/${nombre_base}.tar"
+        archivo_tmp="${archivo_final}.part"
+        tar -cf "$archivo_tmp" -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")"
     fi
 
     if [ $? -ne 0 ]; then
+        rm -f "$archivo_tmp" 2>/dev/null
+        trap - INT TERM
         log "ERROR" "Falló la creación del backup"
         echo -e "${ROJO}[ERROR]${NC} Falló la creación del backup"
         exit 1
     fi
+
+    mv -f "$archivo_tmp" "$archivo_final"
+    trap - INT TERM
+
+    archivo_destino="$archivo_final"
 
     local tamanio
     tamanio=$(du -sh "$archivo_destino" | cut -f1)
