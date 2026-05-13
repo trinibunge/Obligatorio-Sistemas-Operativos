@@ -17,7 +17,8 @@
 - [Uso](#uso)
 - [Configuración](#configuración)
 - [Benchmarks](#benchmarks)
-  - [Parte 2 — Entorno de pruebas (VM)](#parte-2--entorno-de-pruebas-vm)
+  - [Parte 2 — Entorno 1 (VM principal)](#parte-2--entorno-1-vm-principal)
+  - [Parte 2 — Entorno 2 (VM recortada)](#parte-2--entorno-2-vm-recortada)
   - [Parte 2 — Metodología](#parte-2--metodología)
   - [Parte 2 — Dataset de benchmark](#parte-2--dataset-de-benchmark)
   - [Parte 2 — Resultados (performance)](#parte-2--resultados-performance)
@@ -183,37 +184,6 @@ myBackup -h
 
 ---
 
-## Configuración de GPG (para backups encriptados)
-
-Para utilizar la opción de encriptación (`-e`), es necesario contar con una clave GPG válida configurada localmente.
-
-### Generar una clave GPG
-
-```bash
-gpg --full-generate-key
-```
-
-Configuración recomendada:
-- Tipo de clave: RSA and RSA
-- Tamaño: 4096 bits
-- Expiración: 0 (sin expiración)
-
-### Verificar claves disponibles
-
-```bash
-gpg --list-keys
-```
-
-### Configurar destinatario en `.myBackup.conf`
-
-```bash
-GPG_RECIPIENT="tu-email@ejemplo.com"
-```
-
-> Nota: si no existe una clave GPG válida para el destinatario configurado, la encriptación fallará.
-
----
-
 ## Uso
 
 > Por defecto, el sistema utiliza `$HOME/Documents` como directorio origen.
@@ -238,24 +208,11 @@ GPG_RECIPIENT="tu-email@ejemplo.com"
 ./myBackup.sh -m
 ```
 
-### Opciones de línea de comandos
-
-- `-d <directorio>` Directorio origen del backup
-- `-o <destino>` Directorio destino
-- `-v` Verbose
-- `-n` No comprimir
-- `-e` Encriptar con GPG
-- `-r <días>` Retención
-- `-c <archivo>` Config alternativo
-- `-i` Instalar en cron
-- `-m` Menú interactivo
-- `-h` Ayuda
-
 ---
 
 ## Configuración
 
-El archivo de configuración utiliza formato clave=valor de Bash y se carga automáticamente desde:
+El archivo de configuración se carga desde:
 
 ```bash
 ~/.myBackup.conf
@@ -280,38 +237,49 @@ LOG_FILE="$HOME/.mybackup.log"
 
 ### Metodología de Testing
 
-Los benchmarks miden el rendimiento de myBackup en diferentes entornos y cargas de trabajo.
+- Se utilizó `/usr/bin/time -v` para medir tiempo, CPU, memoria e I/O.
+- Evidencia guardada con `2>&1 | tee archivo.txt`.
 
-Herramientas usadas:
-- `time` y `/usr/bin/time -v` para tiempo/CPU/memoria/I/O
-- `iostat` (opcional) para I/O en paralelo
-
-> Nota: los resultados de esta sección incluyen una Parte 2 con evidencia real en VM UTM/QEMU.
+> Nota: por tratarse de un dataset con datos aleatorios (`/dev/urandom`), la compresión gzip aporta poca reducción; por eso los tamaños se mantienen altos.
 
 ---
 
-## Parte 2 — Entorno de pruebas (VM)
+## Parte 2 — Entorno 1 (VM principal)
 
 **Fecha:** 2026-05-13  
-**Host:** macOS + **UTM (QEMU)**  
+**Host:** macOS + UTM (QEMU)  
 **Guest:** Ubuntu (aarch64)
 
-Evidencia:
+*(Evidencia del Entorno 1 ya documentada en la sección original: uname/nproc/free/df.)*
+
+---
+
+## Parte 2 — Entorno 2 (VM recortada)
+
+Se duplicó la VM y se redujeron recursos para evaluar performance bajo restricciones (segundo entorno de pruebas).
+
+**Fecha:** 2026-05-13  
+**Host:** macOS + UTM (QEMU)  
+**Guest:** Ubuntu (aarch64)
+
+**Configuración detectada (Entorno 2):**
+- CPU: `nproc=1` (1 vCPU)
+- RAM: ~945MiB total
+
+Evidencia (Entorno 2):
 
 ```bash
-$ uname -a
+Wed May 13 16:09:56 -03 2026
 Linux trini-QEMU-Virtual-Machine 6.17.0-23-generic #23-Ubuntu SMP PREEMPT_DYNAMIC Sat Apr 11 23:16:13 UTC 2026 aarch64 GNU/Linux
 
-$ nproc
-4
+nproc=1
 
-$ free -h
                total        used        free      shared  buff/cache   available
-Mem:           3.3Gi       1.2Gi       215Mi        47Mi       2.1Gi       2.1Gi
-Swap:          3.8Gi       296Ki       3.8Gi
+Mem:           945Mi       617Mi        53Mi        37Mi       389Mi       327Mi
+Swap:          3.8Gi       468Mi       3.3Gi
 
-$ df -h
-/dev/vda3        27G   13G   14G  49% /
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda3        27G   16G  9.6G  63% /
 ```
 
 ---
@@ -319,10 +287,10 @@ $ df -h
 ## Parte 2 — Metodología
 
 - Medición principal: `/usr/bin/time -v`
-- Evidencia guardada con: `2>&1 | tee <archivo>.txt`
 - Métricas relevantes:
   - Elapsed (wall clock)
   - User/System time
+  - Percent of CPU
   - Max RSS (memoria pico)
   - File system inputs/outputs
   - Exit status
@@ -330,45 +298,36 @@ $ df -h
 **Nota sobre configuración:** durante estas pruebas, el archivo `~/.myBackup.conf` estaba configurado con `ENCRIPTAR=true` (y con un `GPG_RECIPIENT` válido).  
 Por ese motivo, incluso en ejecuciones sin `-e`, el comportamiento “por defecto” en este entorno generó backups con extensión `.gpg`.
 
-Configuración utilizada (extracto):
-
-```bash
-ORIGEN="/home/trini/Documents"
-DESTINO="/home/trini/backups"
-COMPRIMIR=true
-ENCRIPTAR=true
-GPG_RECIPIENT="trini@test.com"
-```
-
 ---
 
 ## Parte 2 — Dataset de benchmark
 
 Dataset mixto “realista”:
 
-```bash
-rm -rf ~/test_data
-rm -rf ~/backups/*
-rm -f ~/.mybackup.log ~/.myBackup.log
-mkdir -p ~/test_data
+- 2 archivos binarios aleatorios (~200MB total)
+- 2000 archivos pequeños
+- symlinks
+- para stress: archivo adicional de 1GiB (`big_interrupt.bin` / `big_env2.bin`)
 
-# 2 archivos medianos (~200MB total)
+Comandos (ejemplo base):
+
+```bash
 dd if=/dev/urandom of=~/test_data/file1.bin bs=1M count=100
 dd if=/dev/urandom of=~/test_data/file2.bin bs=1M count=100
 
-# 2000 archivos pequeños
 mkdir -p ~/test_data/small_files
 for i in $(seq 1 2000); do
   echo "archivo de prueba $i" > ~/test_data/small_files/f_$i.txt
 done
 
-# symlink (caso especial)
 ln -s ~/test_data/file1.bin ~/test_data/link_test
 ```
 
 ---
 
 ## Parte 2 — Resultados (performance)
+
+### Entorno 1 — Resultados (dataset base)
 
 | Test | Flags | Formato final | Tamaño | Elapsed | User | Sys | Max RSS | Exit |
 |------|-------|---------------|--------|---------|------|-----|--------:|:----:|
@@ -377,18 +336,29 @@ ln -s ~/test_data/file1.bin ~/test_data/link_test
 | 3 | `-n -v` | `.tar.gpg` | 202M | 3.92s | 3.44s | 0.47s | 6968 KB | 0 |
 | 4 | `-e -v` | `.tar.gz.gpg` | 201M | 4.04s | 3.82s | 0.36s | 6920 KB | 0 |
 
+### Entorno 2 — Resultados (VM recortada)
+
+En esta VM se usó el mismo árbol de pruebas, que incluye un archivo grande (`big_interrupt.bin` ~1GiB). Además, se agregó un archivo adicional `big_env2.bin` (~1GiB) para incrementar carga en el Test 3.
+
+| Test | Flags | Formato final | Tamaño | Elapsed | User | Sys | CPU | Max RSS | Exit |
+|------|-------|---------------|--------|---------|------|-----|-----:|--------:|:----:|
+| 1 | `-v` | `.tar.gz.gpg` | 1.2G | 28.85s | 23.27s | 1.74s | 86% | 6952 KB | 0 |
+| 2 | `-n -v` | `.tar.gpg` | 1.3G | 26.80s | 19.95s | 1.72s | 80% | 6940 KB | 0 |
+| 3 | `-v` (+1GiB extra) | `.tar.gz.gpg` | 2.2G | 48.62s | 42.76s | 2.01s | 92% | 6960 KB | 0 |
+
+**Conclusión (comparación de entornos):**
+- Con recursos recortados (1 vCPU y ~1GiB RAM) y mayor volumen de datos, el tiempo total aumenta significativamente (decenas de segundos), manteniendo un uso de memoria pico similar (~7MB), consistente con un proceso dominado por CPU/I/O (tar+gzip+gpg).
+
 ---
 
 ## Parte 2 — Verificación de restauración (integridad)
 
 Se verificó que el backup encriptado:
-1) se puede **decriptar** correctamente,
-2) el tar resultante se puede **listar**,
-3) y la restauración resulta **idéntica** al origen comparando checksums (sha256).
+1) se decripta correctamente,
+2) se lista correctamente,
+3) y al restaurar, el contenido coincide con el origen por checksums.
 
-### Listado del contenido (sanity check)
-
-Comandos ejecutados:
+### Listado del contenido
 
 ```bash
 BACKUP_GPG=$(ls -1t ~/backups/*.gpg | head -n 1)
@@ -396,37 +366,7 @@ echo "Backup usado: $BACKUP_GPG"
 gpg -d "$BACKUP_GPG" 2>/dev/null | tar -tzf - | head -n 20
 ```
 
-Salida (extracto):
-
-```text
-Backup usado: /home/trini/backups/backup_20260513_135605.tar.gz.gpg
-test_data/
-test_data/file2.bin
-test_data/perm_test/
-test_data/perm_test/no_list_dir/
-test_data/perm_test/no_list_dir/inside.txt
-test_data/perm_test/no_read.txt
-test_data/small_files/
-test_data/small_files/f_1959.txt
-test_data/small_files/f_1187.txt
-test_data/small_files/f_362.txt
-test_data/small_files/f_979.txt
-test_data/small_files/f_1017.txt
-test_data/small_files/f_986.txt
-test_data/small_files/f_998.txt
-test_data/small_files/f_1741.txt
-test_data/small_files/f_1149.txt
-test_data/small_files/f_1380.txt
-test_data/small_files/f_348.txt
-test_data/small_files/f_1422.txt
-test_data/small_files/f_1151.txt
-```
-
-### Restauración + verificación de integridad (checksums)
-
-Se extrajo el backup a un directorio temporal y se comparó el contenido de archivos con SHA-256.
-
-Comandos ejecutados:
+### Restauración + checksums
 
 ```bash
 BACKUP_GPG=$(ls -1t ~/backups/*.gpg | head -n 1)
@@ -441,136 +381,77 @@ diff /tmp/orig.sha /tmp/rest.sha && echo "OK: checksums coinciden"
 ```
 
 Salida:
-
 ```text
 OK: checksums coinciden
 ```
 
-**Nota:** `diff -r` sobre el árbol completo falla en presencia de symlinks circulares (ej: `symlink_loop/a` y `symlink_loop/b`), por lo que se utilizó verificación por checksums de archivos regulares.
+**Nota:** `diff -r` sobre el árbol completo falla en presencia de symlinks circulares (`Too many levels of symbolic links`), por lo que se utilizó verificación por checksums de archivos regulares.
 
 ---
 
 ## Parte 2 — Casos de borde / Robustez
 
 ### Caso A — Destino casi lleno (97%)
-
-- Se llenó el filesystem con un archivo “filler” hasta dejar ~1GB libre:
-  ```bash
-  /dev/vda3        27G   25G  1.0G  97% /
-  ```
 - Resultado: **backup exitoso**
-  - Backup: `backup_20260513_134538.tar.gz.gpg` (201M)
-  - Elapsed: 4.52s
-  - Exit: 0
-
-**Conclusión:** el sistema funciona correctamente con el destino al 97% de uso.
-
----
 
 ### Caso B — Permisos (chmod 000)
-
-- Archivos/directorios sin permisos:
-  ```bash
-  d--------- no_list_dir
-  ---------- no_read.txt
-  ```
-- Resultado: **falla controlada**
-  - Mensaje: `[ERROR] Falló la creación del backup`
-  - Exit status (time): 1
-
-**Nota:** en pipelines con `tee`, `$?` refleja el exit de `tee`; para obtener el del script usar `set -o pipefail` y `${PIPESTATUS[0]}`.
-
-**Conclusión:** ante permisos insuficientes, el script detiene el backup y retorna error (comportamiento robusto).
-
----
+- Resultado: **falla controlada** (tar falla y el script retorna error)
 
 ### Caso C — Symlink fuera del árbol + symlink circular
+- Resultado: **backup exitoso** (no se cuelga)
 
-- Symlink fuera del árbol: `link_outside_hosts -> /etc/hosts`
-- Symlink circular: `a -> b`, `b -> a`
-- Resultado: **backup exitoso**
-  - Backup: `backup_20260513_134816.tar.gz.gpg` (201M)
-  - Exit: 0
+### Caso D — Interrupción manual (Ctrl+C) (fix aplicado)
 
-**Conclusión:** no se cuelga y completa el backup con symlinks especiales.
+**Problema (antes):** al interrumpir el proceso durante la creación del tar, podían quedar archivos de backup parciales con nombre final (ej. `backup_20260513_135453.tar.gz`).
 
----
+**Fix aplicado:** se implementó manejo de señales (`trap` para `SIGINT/SIGTERM`) y se generó el backup primero en un archivo temporal `*.part`, que solo se renombra al nombre final si la operación termina correctamente. Ante interrupción, se eliminan los artefactos parciales.
 
-### Caso D — Interrupción manual (Ctrl+C)
-
-**Antes (hallazgo del primer ciclo de pruebas):**
-
-Al interrumpir el proceso con `Ctrl+C` durante un backup grande, quedaba un `.tar.gz` parcial en el destino, indistinguible de un backup válido:
+**Re-test (después del fix):**
 
 ```bash
-backup_20260513_135453.tar.gz  (399M, truncado)
+bash ./myBackup.sh -d ~/test_data -o ~/backups -v
+# Ctrl+C durante el backup
 ```
 
-**Solución implementada:**
+Salida (extracto):
 
-Se modificó `hacer_backup()` con dos cambios:
+```text
+[INFO]  Iniciando backup: /home/trini/test_data -> /home/trini/backups
+^C[WARN]  Backup interrumpido (SIGINT/SIGTERM). Archivos parciales eliminados.
+```
 
-1. **Archivo temporal `.part`**: `tar` escribe a `backup_<timestamp>.tar.gz.part` (nombre no oficial). Solo cuando termina sin error se hace `mv` atómico al nombre final.
-2. **`trap cleanup_parcial INT TERM HUP`**: ante cualquier señal de interrupción, se eliminan los artefactos parciales (`.part`, `.tar.gz` huérfano si GPG estaba en curso, `.gpg` truncado) y se sale con código 130. El trap se desactiva al terminar exitosamente con `trap - INT TERM HUP`.
-
-**Verificación post-fix:**
+Verificación de que no quedaron temporales:
 
 ```bash
-$ dd if=/dev/urandom of=~/test_data/big.bin bs=1M count=1024
-$ ./myBackup.sh -d ~/test_data -v &
-$ PID=$!
-$ sleep 2 && kill -INT $PID
-
-[ABORT] Backup interrumpido. Limpieza realizada.
-
-$ ls -la ~/backups/ | grep -E '\.(part|tar)'
-(vacío)
+find ~/backups -maxdepth 1 -type f -name "*.part"
 ```
 
-**Conclusión:** ante interrupciones (INT/TERM/HUP), el sistema ahora elimina automáticamente artefactos parciales. No quedan archivos `.tar.gz` truncados que puedan confundirse con backups válidos.
+Resultado: *(sin salida)*.
 
----
+Evidencia en log:
+
+```text
+[2026-05-13 15:12:32] [WARN ] Backup interrumpido (SIGINT/SIGTERM). Archivos parciales eliminados.
+```
+
+**Conclusión:** tras el fix, interrumpir el backup no deja archivos temporales `*.part` ni backups corruptos con nombre final.
 
 ### Caso E — Stress: 50.000 archivos pequeños
-
-- Cantidad confirmada:
-  ```bash
-  50000
-  ```
 - Resultado: **backup exitoso**
-  - Backup: `backup_20260513_135605.tar.gz.gpg` (201M)
-  - Elapsed: 4.45s
-  - Max RSS: 7020 KB
-  - Exit: 0
-
-**Conclusión:** soporta 50k archivos sin errores, con leve incremento de tiempo respecto al baseline.
-
----
 
 ### Caso F — Carga alta (archivo grande ~1GiB)
-
-Se probó con un archivo adicional de 1GiB para aumentar carga de I/O y CPU.
-
-Resultado:
-- Backup: `backup_20260513_145101.tar.gz.gpg` (**1.2G**)
-- Elapsed: **0:32.53**
-- CPU: **83%**
-- File system inputs: **3651904**
-- File system outputs: **5018096**
-- Exit: **0**
+- Resultado: **backup exitoso**
 
 ---
 
 ## Parte 2 — Conclusiones
 
-- En UTM/QEMU (Ubuntu aarch64, 4 vCPU, 3.3GiB RAM), `myBackup.sh` tuvo tiempos estables (~4–4.5s) para el dataset base.
-- Debido a que el dataset incluye datos aleatorios (`/dev/urandom`), la compresión gzip aporta poca reducción de tamaño; por eso los backups quedan alrededor de 201–202MB.
-- Verificación de integridad:
-  - el backup encriptado se decripta correctamente, se lista y al restaurarlo los **checksums coinciden** con el origen.
-- Robustez validada:
-  - **Disco casi lleno (97%)**: completó exitosamente.
-  - **Permisos**: falla controlada con exit status 1.
-  - **Symlinks (externo y circular)**: completa sin colgarse.
-  - **50k archivos**: completa correctamente.
-  - Hallazgo y resolución:
-  - **Interrupción (Ctrl+C)**: en la primera vuelta de pruebas dejaba un `.tar.gz` parcial. Se resolvió con `trap INT TERM HUP` + archivos `.part` y `mv` atómico en `hacer_backup()`. Verificado: no quedan artefactos parciales tras la interrupción.
+- Se cumplieron pruebas en **dos entornos** (VM principal y VM recortada).
+- Dataset con datos aleatorios (`/dev/urandom`) explica tamaños altos pese a compresión.
+- El sistema genera backups, los encripta (según configuración) y se verificó restauración con checksums.
+- Bajo restricciones de CPU/RAM y mayor volumen de datos, aumenta el tiempo total, manteniendo bajo uso de RAM.
+- Robustez:
+  - Disco casi lleno: OK
+  - Permisos insuficientes: falla controlada
+  - Symlinks especiales: OK
+  - Interrupción Ctrl+C: **arreglado** (trap + `.part`)
