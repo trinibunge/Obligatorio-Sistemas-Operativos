@@ -133,6 +133,18 @@ limpiar_backups_viejos() {
     fi
 }
 
+# ---------------------------------------------------------------------------
+# hacer_backup()
+#
+# Estrategia anti-corrupción ante interrupciones (Ctrl+C / SIGTERM / SIGHUP):
+#   1) tar escribe a "<destino>.part" (nombre no oficial).
+#   2) `mv` atómico al nombre final solo cuando tar termina sin error.
+#   3) Trap activo durante TODO el backup (incluyendo GPG):
+#        - Si el flag `backup_completo` es false, borra el .part, el
+#          archivo intermedio y cualquier .gpg parcial.
+#        - Si es true (ya terminó todo), no toca nada.
+#   4) Al terminar exitosamente: `backup_completo=true` y `trap - INT TERM HUP`.
+# ---------------------------------------------------------------------------
 hacer_backup() {
     # Validaciones
     if [ -z "$ORIGEN" ]; then
@@ -157,16 +169,20 @@ hacer_backup() {
     local archivo_destino=""
     local archivo_final=""
     local archivo_tmp=""
+    local backup_completo=false
 
     cleanup_parcial() {
-        [ -n "$archivo_tmp" ] && rm -f "$archivo_tmp" 2>/dev/null
-        [ -n "$archivo_final" ] && rm -f "$archivo_final" 2>/dev/null
-        [ -n "$archivo_final" ] && rm -f "${archivo_final}.gpg" 2>/dev/null
-        log "WARN" "Backup interrumpido (SIGINT/SIGTERM). Archivos parciales eliminados."
+        if [ "$backup_completo" = false ]; then
+            [ -n "$archivo_tmp" ]   && rm -f "$archivo_tmp" 2>/dev/null
+            [ -n "$archivo_final" ] && rm -f "$archivo_final" 2>/dev/null
+            [ -n "$archivo_final" ] && rm -f "${archivo_final}.gpg" 2>/dev/null
+            log "WARN" "Backup interrumpido (SIGINT/SIGTERM/SIGHUP). Archivos parciales eliminados."
+            echo -e "\n${ROJO}[ABORT]${NC} Backup interrumpido. Limpieza realizada."
+        fi
         exit 130
     }
 
-    trap cleanup_parcial INT TERM
+    trap cleanup_parcial INT TERM HUP
 
     log "INFO" "Iniciando backup: $ORIGEN -> $DESTINO"
 
@@ -183,23 +199,25 @@ hacer_backup() {
 
     if [ $? -ne 0 ]; then
         rm -f "$archivo_tmp" 2>/dev/null
-        trap - INT TERM
+        trap - INT TERM HUP
         log "ERROR" "Falló la creación del backup"
         echo -e "${ROJO}[ERROR]${NC} Falló la creación del backup"
         exit 1
     fi
 
+    # Rename atómico: a partir de acá el .tar(.gz) existe con su nombre final
     mv -f "$archivo_tmp" "$archivo_final"
-
     archivo_destino="$archivo_final"
 
     local tamanio
     tamanio=$(du -sh "$archivo_destino" | cut -f1)
     log "INFO" "Backup creado: $archivo_destino ($tamanio)"
 
-    # Encriptar si se pidió
+    # Encriptar si se pidió (el trap sigue activo; protege ante Ctrl+C durante GPG)
     if $ENCRIPTAR; then
         if [ -z "$GPG_RECIPIENT" ]; then
+            rm -f "$archivo_final"
+            trap - INT TERM HUP
             echo -e "${ROJO}[ERROR]${NC} Encriptación activada pero GPG_RECIPIENT no está configurado en .myBackup.conf"
             exit 1
         fi
@@ -209,16 +227,21 @@ hacer_backup() {
             archivo_destino="${archivo_destino}.gpg"
             log "INFO" "Backup encriptado: $archivo_destino"
         else
+            rm -f "$archivo_final" "${archivo_final}.gpg"
+            trap - INT TERM HUP
             log "ERROR" "Falló la encriptación"
             echo -e "${ROJO}[ERROR]${NC} Falló la encriptación"
             exit 1
         fi
     fi
 
+    # Éxito: marcar como completo y desactivar el trap
+    backup_completo=true
+    trap - INT TERM HUP
+
     # Limpiar backups viejos
     limpiar_backups_viejos
 
-    trap - INT TERM
     echo -e "${VERDE}[OK]${NC} Backup completado: $archivo_destino ($tamanio)"
     log "INFO" "Backup completado exitosamente"
 }
