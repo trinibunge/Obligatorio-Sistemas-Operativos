@@ -63,7 +63,7 @@ El sistema permite:
 ## Características
 
 - **Backup Automático**: Crea respaldos en intervalos configurables (horas/días)
-- **Múltiples Formatos**: Soporta tar.gz, tar.bz2, tar sin comprimir
+- **Múltiples Formatos**: Soporta tar.gz (comprimido) y tar sin comprimir
 - **Configuración Flexible**: Línea de comandos + archivo de configuración
 - **Restauración Completa**: Recupera datos desde cualquier backup
 - **Gestión de Retención**: Elimina automáticamente backups antiguos
@@ -341,6 +341,30 @@ LOG_FILE="$HOME/.mybackup.log"
 
 Los benchmarks miden el rendimiento de myBackup en diferentes entornos y cargas de trabajo.
 
+#### Herramientas de Medición
+
+Todos los tiempos se midieron con el comando `time` de Bash:
+
+```bash
+time ./myBackup.sh -d ~/test_data -o ~/backups -v
+```
+
+El uso de CPU y memoria se capturó con:
+
+```bash
+/usr/bin/time -v ./myBackup.sh -d ~/test_data -o ~/backups
+```
+
+El I/O de disco se monitoreó en paralelo con:
+
+```bash
+iostat -x 1 &
+./myBackup.sh -d ~/test_data -o ~/backups
+kill %1
+```
+
+Cada prueba se ejecutó 3 veces y se tomó el valor promedio para eliminar variaciones puntuales.
+
 ### Configuración de Máquinas Virtuales Testeadas:
 
 | **VM** | **SO Base** | **SO Invitado** | **CPU** | **RAM** | **Almacenamiento** |
@@ -399,7 +423,13 @@ Prueba de estrés: Archivos especiales (symlinks, pipes, sockets)
 └─  Completado sin errores
 
 #### Test 5: Automatización con Cron
-Ejecución automática cada 6 horas (1GB de datos):
+Ejecución automática cada 6 horas (1GB de datos). Se configuró con:
+
+```bash
+./myBackup.sh -d ~/test_data -o ~/backups -i
+# Verificación: crontab -l
+# Monitoreo del log: tail -f ~/.mybackup.log
+```
 
 | **Ejecución** | **Hora** | **Tiempo** | **Tamaño** | **Estatus** |
 |:---:|:---:|:---:|:---:|:---:|
