@@ -13,6 +13,8 @@ install: backup_log
 	# Copiar backup_log a un directorio en PATH para que el script lo encuentre
 	sudo cp backup_log /usr/local/bin/backup_log
 	sudo chmod +x /usr/local/bin/backup_log
+	sudo cp myBackup.1 /usr/share/man/man1/myBackup.1
+	sudo mandb
 	@echo "backup_log instalado en /usr/local/bin"
 	@echo "Copiá .myBackup.conf a tu HOME: cp .myBackup.conf ~/.myBackup.conf"
 
