@@ -384,7 +384,7 @@ OK: checksums coinciden
 
 **Problema detectado en testing:** al interrumpir el proceso durante la creación del tar, la señal `SIGINT` llegaba directamente a `tar` (proceso en primer plano), lo que lo mataba antes de que el trap del script pudiera actuar. El archivo `.part` quedaba en disco sin ser eliminado.
 
-**Fix aplicado:** `tar` ahora corre en background (`&`) seguido de `wait`, de forma que el script intercepta la señal primero en `cleanup_parcial`, mata a `tar` explícitamente con `kill $TAR_PID`, y luego elimina el `.part`. Se agregó además un `rm -f $DESTINO/*.part` de red para cubrir cualquier caso rezagado.
+**Fix aplicado:** `tar` ahora corre en background (`&`) seguido de `wait`, de forma que el script intercepta la señal primero en `cleanup_parcial`, mata a `tar` explícitamente con `kill $TAR_PID`, y luego elimina el `.part`. Se agregó además un `rm -f $DESTINO/*.part` de red para cubrir cualquier caso.
 
 **Test ejecutado:**
 
