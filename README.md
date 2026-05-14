@@ -364,13 +364,12 @@ ln -s ~/test_data/file1.bin ~/test_data/link_test
 
 ### Entorno 1 — Resultados (dataset base)
 
-| Test | Flags | Formato final | Tamaño | Elapsed | User | Sys | Max RSS | Exit |
-|------|-------|---------------|--------|---------|------|-----|--------:|:----:|
-| 1 | `-v` | `.tar.gz.gpg` | 201M | 4.19s | 3.89s | 0.44s | 6940 KB | 0 |
-| 2 | (config `ENCRIPTAR=true`) | `.tar.gz.gpg` | 201M | 4.07s | 3.83s | 0.38s | 6960 KB | 0 |
-| 3 | `-n -v` | `.tar.gpg` | 202M | 3.92s | 3.44s | 0.47s | 6968 KB | 0 |
-| 4 | `-e -v` | `.tar.gz.gpg` | 201M | 4.04s | 3.82s | 0.36s | 6920 KB | 0 |
-
+| Test | Flags | Formato final | Tamaño | Elapsed | User | Sys | CPU | Max RSS | Exit |
+|------|-------|---------------|--------|---------|------|-----|-----|--------:|:----:|
+| 1 | `-v` | `.tar.gz.gpg` | 203M | 4.70s | 3.89s | 0.67s | 96% | 6940 KB | 0 |
+| 2 | (config `ENCRIPTAR=true`) | `.tar.gz.gpg` | 203M | 4.54s | 3.82s | 0.54s | 96% | 6960 KB | 0 |
+| 3 | `-n -v` | `.tar.gpg` | 203M | 4.18s | 3.31s | 0.54s | 92% | 6968 KB | 0 |
+| 4 | `-e -v` | `.tar.gz.gpg` | 203M | 4.60s | 3.85s | 0.50s | 94% | 6920 KB | 0 |
 ### Entorno 2 — Resultados (VM recortada)
 
 En esta VM se usó el mismo árbol de pruebas, que incluye un archivo grande (`big_interrupt.bin` ~1GiB). Además, se agregó un archivo adicional `big_env2.bin` (~1GiB) para incrementar carga en el Test 3.
