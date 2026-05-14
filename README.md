@@ -189,23 +189,25 @@ myBackup -h
 > Por defecto, el sistema utiliza `$HOME/Documents` como directorio origen.
 > Este valor puede modificarse en `~/.myBackup.conf` o sobrescribirse mediante `-d`.
 
-### Uso básico
+### Ejemplos de uso básico
 
 ```bash
-# Backup usando el directorio configurado por defecto
+Uso básico
+
+# Backup usando la configuración por defecto
 ./myBackup.sh
 
-# Backup simple del directorio de documentos
-./myBackup.sh -d ~/Documents
+# Backup de otro directorio
+./myBackup.sh -d ~/Downloads
 
 # Backup a ubicación específica
-./myBackup.sh -d ~/Documents -o ~/mis_backups
+./myBackup.sh -o ~/mis_backups
 
-# Modo verbose (ver detalles)
-./myBackup.sh -d ~/Documents -v
+# Modo verbose (muestra detalles)
+./myBackup.sh -v
 
-# Sin compresión (para ficheros ya comprimidos)
-./myBackup.sh -d ~/Documents -n
+# Sin compresión (útil para archivos ya comprimidos)
+./myBackup.sh -n
 ```
 
 ---
@@ -214,10 +216,10 @@ myBackup -h
 
 ```bash
 # Backup encriptado con GPG
-./myBackup.sh -d ~/Documents -e
+./myBackup.sh -e
 
 # Retención personalizada (15 días)
-./myBackup.sh -d ~/Documents -r 15
+./myBackup.sh -r 15
 
 # Crear configuración alternativa
 sudo mkdir -p /etc/mybackup
@@ -229,8 +231,8 @@ sudo nano /etc/mybackup/config.conf
 # Ejecutar usando esa configuración
 ./myBackup.sh -c /etc/mybackup/config.conf
 
-# Instalar en cron para automatización
-./myBackup.sh -d ~/Documents -o ~/backups -i
+# Instalar tarea automática en cron
+./myBackup.sh -i
 
 # Interfaz interactiva (menú)
 ./myBackup.sh -m
