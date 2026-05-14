@@ -192,22 +192,75 @@ myBackup -h
 ### Uso básico
 
 ```bash
+# Backup usando el directorio configurado por defecto
 ./myBackup.sh
+
+# Backup simple del directorio de documentos
 ./myBackup.sh -d ~/Documents
+
+# Backup a ubicación específica
 ./myBackup.sh -d ~/Documents -o ~/mis_backups
+
+# Modo verbose (ver detalles)
 ./myBackup.sh -d ~/Documents -v
+
+# Sin compresión (para ficheros ya comprimidos)
 ./myBackup.sh -d ~/Documents -n
 ```
+
+---
 
 ### Uso avanzado
 
 ```bash
+# Backup encriptado con GPG
 ./myBackup.sh -d ~/Documents -e
+
+# Retención personalizada (15 días)
 ./myBackup.sh -d ~/Documents -r 15
+
+# Crear configuración alternativa
+sudo mkdir -p /etc/mybackup
+sudo cp myBackup.conf /etc/mybackup/config.conf
+
+# Editar configuración alternativa
+sudo nano /etc/mybackup/config.conf
+
+# Ejecutar usando esa configuración
+./myBackup.sh -c /etc/mybackup/config.conf
+
+# Instalar en cron para automatización
 ./myBackup.sh -d ~/Documents -o ~/backups -i
+
+# Interfaz interactiva (menú)
 ./myBackup.sh -m
 ```
 
+### Opciones de línea de comandos
+
+Opciones:
+  -d <directorio>   Directorio origen del backup (sobrescribe ORIGEN del config)
+  -o <destino>      Directorio destino (default: ~/backups)
+  -v                Verbose: mostrar detalles en pantalla
+  -n                No comprimir (por defecto comprime con gzip)
+  -e                Encriptar con GPG
+  -r <días>         Retención: días a guardar backups (default: 7)
+  -c <archivo>      Archivo de configuración alternativo
+  -i                Instalar en cron con frecuencia FRECUENCIA
+  -m                Abrir menú interactivo (requiere dialog)
+  -h                Mostrar esta ayuda
+- `-d <directorio>` Directorio origen del backup
+- `-o <destino>` Directorio destino
+- `-v` Verbose
+- `-n` No comprimir
+- `-e` Encriptar con GPG
+- `-r <días>` Retención
+- `-c <archivo>` Config alternativo
+- `-i` Instalar en cron
+- `-m` Menú interactivo
+- `-h` Ayuda
+
+---
 ---
 
 ## Configuración
