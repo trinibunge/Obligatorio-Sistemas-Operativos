@@ -95,7 +95,7 @@ El sistema permite:
 
 ### Dependencias
 - tar (empaquetado)
-- gzip/bzip2 (compresión)
+- gzip (compresión)
 - gpg (encriptación)
 - cron (automatización)
 - gcc + make (para compilar utilidad C)
@@ -211,7 +211,13 @@ Uso básico
 ```
 
 ---
+### Ayuda y documentación
 
+```bash
+#El sistema incluye una página de manual accesible desde la terminal:
+man myBackup
+#Ademas está la ayuda rapida : myBackup -h
+```
 ### Uso avanzado
 
 ```bash
